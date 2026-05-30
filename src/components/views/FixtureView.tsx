@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Match, Prediction, User } from "../../lib/mockData";
 import MotivanationalBanner from "@/lib/MotivationalBanner";
+import { useServerTime } from "@/hooks/useServerTime";
 
 interface FixtureViewProps {
 	user: User;
@@ -33,13 +34,16 @@ export default function FixtureView({
 	}>({});
 	const [savingId, setSavingId] = useState<string | null>(null);
 	const [successId, setSuccessId] = useState<string | null>(null);
-	const [currentTime, setCurrentTime] = useState<number>(Date.now());
+	const getTime = useServerTime();
+	const [currentTime, setCurrentTime] = useState(0);
 
-	// Keep time updated for dynamic lock checks
+	// Keep time updated using server-anchored clock (immune to local clock changes)
 	useEffect(() => {
-		const timer = setInterval(() => setCurrentTime(Date.now()), 10000);
+		const tick = () => setCurrentTime(getTime());
+		tick();
+		const timer = setInterval(tick, 10_000);
 		return () => clearInterval(timer);
-	}, []);
+	}, [getTime]);
 
 	// Pre-populate input fields with existing predictions
 	useEffect(() => {
@@ -50,7 +54,8 @@ export default function FixtureView({
 				away: p.predictAway.toString(),
 			};
 		});
-		setLocalScores(initialScores);
+		const apply = () => setLocalScores(initialScores);
+		apply();
 	}, [predictions]);
 
 	// Utility to determine lock status

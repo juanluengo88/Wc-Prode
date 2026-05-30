@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Match, Prediction } from "../../lib/mockData";
+import { useServerTime } from "@/hooks/useServerTime";
 
 interface MatchDetailViewProps {
 	match: Match;
@@ -30,6 +31,7 @@ export default function MatchDetailView({
 	const [showSuccess, setShowSuccess] = useState(false);
 	const [timeLeftStr, setTimeLeftStr] = useState("");
 	const [isLocked, setIsLocked] = useState(false);
+	const getTime = useServerTime();
 
 	// Sync state if prediction changes
 	useEffect(() => {
@@ -43,7 +45,7 @@ export default function MatchDetailView({
 	useEffect(() => {
 		const calculateTimeLeft = () => {
 			const matchTime = new Date(match.dateTime).getTime();
-			const now = Date.now();
+			const now = getTime();
 			const diff = matchTime - now;
 
 			// Lock if less than 15 minutes left (900000 ms) or if status is not SCHEDULED
