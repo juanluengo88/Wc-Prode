@@ -1,25 +1,21 @@
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useProde } from '../../context/ProdeContext';
-import LoginView from '../../components/views/LoginView';
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useProde } from "../../context/ProdeContext";
+import LoginView from "../../components/views/LoginView";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { isLoggedIn, handleLoginSuccess } = useProde();
+	const router = useRouter();
+	const { isLoggedIn, isAuthLoading } = useProde();
 
-  // If already logged in, redirect to fixture
-  useEffect(() => {
-    if (isLoggedIn) {
-      router.push('/fixture');
-    }
-  }, [isLoggedIn, router]);
+	useEffect(() => {
+		if (!isAuthLoading && isLoggedIn) {
+			router.push("/fixture");
+		}
+	}, [isLoggedIn, isAuthLoading, router]);
 
-  const onLogin = (userProfile: { displayName: string; email: string }) => {
-    handleLoginSuccess(userProfile);
-    router.push('/fixture');
-  };
+	if (isAuthLoading) return null;
 
-  return <LoginView onLoginSuccess={onLogin} />;
+	return <LoginView />;
 }

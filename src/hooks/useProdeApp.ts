@@ -1,144 +1,144 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import {
-  CURRENT_USER,
-  mockMatches,
-  mockPredictions,
-  mockUsers,
-  Match,
-  Prediction,
-  User,
-} from '../lib/mockData';
+import { useState, useEffect, useCallback } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import type { Match, Prediction, User } from "@/lib/mockData";
 
 export function useProdeApp() {
-  // Authentication Mock States
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User>(CURRENT_USER);
+	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [currentUser, setCurrentUser] = useState<User | null>(null);
+	const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  // Navigation Mock States
-  const [activeTab, setActiveTab] = useState<'FIXTURE' | 'PREDICTIONS' | 'LEADERBOARD' | 'PROFILE'>('FIXTURE');
-  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+	const [activeTab, setActiveTab] = useState<
+		"FIXTURE" | "PREDICTIONS" | "LEADERBOARD" | "PROFILE"
+	>("FIXTURE");
+	const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
 
-  // Mock Database State
-  const [matches, setMatches] = useState<Match[]>(mockMatches);
-  const [predictions, setPredictions] = useState<Prediction[]>(mockPredictions);
-  const [users, setUsers] = useState<User[]>(mockUsers);
+	const [matches, setMatches] = useState<Match[]>([]);
+	const [predictions, setPredictions] = useState<Prediction[]>([]);
+	const [users, setUsers] = useState<User[]>([]);
 
-  // Auth Handlers
-  const handleLoginSuccess = (userProfile: { displayName: string; email: string }) => {
-    // Create new session user
-    const sessionUser: User = {
-      uid: 'user-session-999',
-      displayName: userProfile.displayName,
-      email: userProfile.email,
-      photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&h=150&q=80',
-      totalPoints: 14, // Starts with some points for demo visual purposes
-      rank: 4,
-    };
-    
-    // Inject current session user into leaderboard
-    const updatedUsers = [...mockUsers.filter((u) => u.uid !== 'user-current-123'), sessionUser]
-      .sort((a, b) => b.totalPoints - a.totalPoints)
-      .map((u, index) => ({ ...u, rank: index + 1 }));
-    
-    const matchedSessionUser = updatedUsers.find((u) => u.uid === 'user-session-999') || sessionUser;
+	const fetchAppData = useCallback(async (uid: string) => {
+		const [matchesRes, predictionsRes, usersRes] = await Promise.all([
+			fetch("/api/matches"),
+			fetch(`/api/predictions?uid=${uid}`),
+			fetch("/api/users"),
+		]);
+		const [matchesData, predictionsData, usersData] = await Promise.all([
+			matchesRes.json(),
+			predictionsRes.json(),
+			usersRes.json(),
+		]);
+		setMatches(matchesData);
+		setPredictions(predictionsData);
+		setUsers(usersData);
+	}, []);
 
-    setCurrentUser(matchedSessionUser);
-    setUsers(updatedUsers);
-    setIsLoggedIn(true);
-    setActiveTab('FIXTURE');
-    setSelectedMatchId(null);
-  };
+	// Listen for Firebase Auth state changes
+	useEffect(() => {
+		const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+			if (firebaseUser) {
+				const res = await fetch(`/api/users/${firebaseUser.uid}`);
+				const profile: User = res.ok
+					? await res.json()
+					: {
+							uid: firebaseUser.uid,
+							displayName: firebaseUser.displayName ?? "",
+							email: firebaseUser.email ?? "",
+							totalPoints: 0,
+						};
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setSelectedMatchId(null);
-  };
+				setCurrentUser(profile);
+				setIsLoggedIn(true);
+				await fetchAppData(firebaseUser.uid);
+			} else {
+				setIsLoggedIn(false);
+				setCurrentUser(null);
+				setMatches([]);
+				setPredictions([]);
+				setUsers([]);
+			}
+			setIsAuthLoading(false);
+		});
 
-  // Prediction Save Handler
-  const handleSavePrediction = async (matchId: string, predictHome: number, predictAway: number) => {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+		return () => unsubscribe();
+	}, [fetchAppData]);
 
-    setPredictions((prev) => {
-      const existingIndex = prev.findIndex((p) => p.matchId === matchId && p.uid === currentUser.uid);
-      
-      if (existingIndex > -1) {
-        // Update existing prediction
-        const updated = [...prev];
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          predictHome,
-          predictAway,
-        };
-        return updated;
-      } else {
-        // Insert new prediction
-        const newPred: Prediction = {
-          predictionId: `pred-${Date.now()}`,
-          uid: currentUser.uid,
-          matchId,
-          predictHome,
-          predictAway,
-          pointsEarned: null,
-        };
-        return [...prev, newPred];
-      }
-    });
-  };
+	const handleLogout = async () => {
+		await signOut(auth);
+	};
 
-  // Profile Update Handler
-  const handleUpdateProfile = async (displayName: string, photoURL: string) => {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+	const handleSavePrediction = async (
+		matchId: string,
+		predictHome: number,
+		predictAway: number,
+	) => {
+		if (!currentUser) return;
 
-    setCurrentUser((prev) => {
-      const updatedUser = {
-        ...prev,
-        displayName,
-        photoURL,
-      };
+		const res = await fetch("/api/predictions", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				uid: currentUser.uid,
+				matchId,
+				predictHome,
+				predictAway,
+			}),
+		});
+		const saved: Prediction = await res.json();
 
-      // Also update the user in the leaderboard lists
-      setUsers((prevUsers) =>
-        prevUsers.map((u) => {
-          if (u.uid === prev.uid) {
-            return {
-              ...u,
-              displayName,
-              photoURL,
-            };
-          }
-          return u;
-        })
-      );
+		setPredictions((prev) => {
+			const idx = prev.findIndex(
+				(p) => p.matchId === matchId && p.uid === currentUser.uid,
+			);
+			if (idx > -1) {
+				const updated = [...prev];
+				updated[idx] = saved;
+				return updated;
+			}
+			return [...prev, saved];
+		});
+	};
 
-      return updatedUser;
-    });
-  };
+	const handleUpdateProfile = async (displayName: string, photoURL: string) => {
+		if (!currentUser) return;
 
-  // Derived States
-  const selectedMatch = matches.find((m) => m.matchId === selectedMatchId);
-  const userPredictionForSelected = predictions.find(
-    (p) => p.matchId === selectedMatchId && p.uid === currentUser.uid
-  );
+		const res = await fetch(`/api/users/${currentUser.uid}`, {
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ displayName, photoURL }),
+		});
+		const updated: User = await res.json();
 
-  return {
-    isLoggedIn,
-    currentUser,
-    activeTab,
-    selectedMatchId,
-    matches,
-    predictions,
-    users,
-    selectedMatch,
-    userPredictionForSelected,
-    handleLoginSuccess,
-    handleLogout,
-    handleSavePrediction,
-    handleUpdateProfile,
-    setSelectedMatchId,
-    setActiveTab,
-  };
+		setCurrentUser(updated);
+		setUsers((prev) =>
+			prev.map((u) =>
+				u.uid === currentUser.uid ? { ...u, displayName, photoURL } : u,
+			),
+		);
+	};
+
+	const selectedMatch = matches.find((m) => m.matchId === selectedMatchId);
+	const userPredictionForSelected = predictions.find(
+		(p) => p.matchId === selectedMatchId && p.uid === currentUser?.uid,
+	);
+
+	return {
+		isLoggedIn,
+		isAuthLoading,
+		currentUser,
+		activeTab,
+		selectedMatchId,
+		matches,
+		predictions,
+		users,
+		selectedMatch,
+		userPredictionForSelected,
+		handleLogout,
+		handleSavePrediction,
+		handleUpdateProfile,
+		setSelectedMatchId,
+		setActiveTab,
+	};
 }
