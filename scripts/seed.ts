@@ -10,14 +10,36 @@
  */
 
 import dotenv from "dotenv";
+import { sleep } from "../src/lib/utils.js";
+import {
+	Team,
+	fetchWCMatches,
+	mapStatus,
+	mapGroupOrStage,
+	fetchTeamData,
+} from "../src/lib/footballDataApi.js";
 
 dotenv.config({ path: [".env", ".env.local"] }); // Load env vars before any other imports
 
-// Dynamic imports ensure firebase-admin reads credentials AFTER env is loaded
-const { initializeApp, getApps, cert } = await import("firebase-admin/app");
-const { getFirestore } = await import("firebase-admin/firestore");
-const { fetchWCMatches, mapStatus, mapGroupOrStage } =
-	await import("../src/lib/footballDataApi.js");
+import { getFirestore } from "firebase-admin/firestore";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
+
+const processTeam = async (
+	teamId: number,
+	token: string,
+): Promise<Team | null> => {
+	let teamData: Team | null = null;
+	while (teamData === null) {
+		const _teamData = await fetchTeamData(teamId, token);
+		if (typeof _teamData !== "number") {
+			teamData = _teamData;
+		} else {
+			console.log(`Waiting for ${_teamData} seconds before retrying...`);
+			await sleep(_teamData);
+		}
+	}
+	return teamData;
+};
 
 async function main() {
 	const token = process.env.FOOTBALL_DATA_API_TOKEN;
@@ -62,8 +84,19 @@ async function main() {
 		});
 	}
 
+	const teams = new Set<number>(
+		matches.flatMap((m) => [m.homeTeam.id, m.awayTeam.id]),
+	);
+	for (const teamId of teams) {
+		const teamData = await processTeam(teamId, token);
+		const teamDocRef = db.collection("teams").doc(String(teamId));
+		batch.set(teamDocRef, teamData);
+	}
+
 	await batch.commit();
-	console.log(`✅  Seeded ${matches.length} matches into Firestore.`);
+	console.log(
+		`✅  Seeded ${matches.length} matches and ${teams.size} teams into Firestore.`,
+	);
 }
 
 main().catch((err) => {

@@ -22,6 +22,20 @@ export interface ApiMatch {
 	};
 }
 
+export interface Squad {
+	id: number;
+	name: string;
+	coach: string;
+	squad: string;
+	nationality: string;
+}
+
+export interface Team {
+	name: string;
+	coach: string;
+	squad: Squad[];
+}
+
 export interface ApiMatchesResponse {
 	matches: ApiMatch[];
 }
@@ -39,6 +53,31 @@ export async function fetchWCMatches(token: string): Promise<ApiMatch[]> {
 
 	const data: ApiMatchesResponse = await res.json();
 	return data.matches;
+}
+
+export async function fetchTeamData(
+	teamId: number,
+	token: string,
+): Promise<{ name: string; coach: string; squad: Squad[] } | number> {
+	let teamData: Response | null = null;
+	let teamDataJson = null;
+	try {
+		teamData = await fetch(`${BASE_URL}/teams/${teamId}`, {
+			headers: { "X-Auth-Token": token },
+		});
+		teamDataJson = await teamData.json();
+		teamDataJson = {
+			name: teamDataJson.name,
+			coach: teamDataJson.coach.name,
+			squad: teamDataJson.squad,
+		};
+	} catch (error) {
+		if (teamData && teamData.status === 404) {
+			console.warn(`Hammering API too much, waiting before retrying...`);
+			return parseInt(teamData.headers.get("X-RequestCounter-Reset") || "0");
+		}
+	}
+	return teamDataJson;
 }
 
 // ─── Mapping helpers ──────────────────────────────────────────────────────────
