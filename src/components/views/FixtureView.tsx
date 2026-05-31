@@ -3,8 +3,8 @@
 import React from "react";
 import { Match, Prediction, User } from "../../lib/mockData";
 import MotivanationalBanner from "@/lib/MotivationalBanner";
-import MatchCard from "@/lib/MatchCard";
-import FixtureNavBar from "@/lib/FixtureNavBar";
+import MatchCard from "@/components/MatchCard/MatchCard";
+import FixtureNavBar from "@/components/navigation/FixtureNavBar";
 import { useFixtureView } from "@/hooks/useFixtureView";
 
 interface FixtureViewProps {

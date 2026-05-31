@@ -11,6 +11,22 @@ interface FixtureNavBarProps {
   onFilteredMatchesChange: (filtered: Match[]) => void;
 }
 
+
+function canBeFiltered(match : Match) : Boolean{
+  return  (match.teamAway != null || match.teamHome !=null)
+}
+
+function matchesSearch(match : Match, newSearch : string) : Boolean {
+  
+  if(canBeFiltered(match)){
+    return (newSearch.trim() === "" ? true :
+        (match.teamHome || "").toLowerCase().includes(newSearch.toLowerCase()) ||
+        (match.teamAway || "").toLowerCase().includes(newSearch.toLowerCase()))
+  }
+  console.log(match.teamAway)
+  return false
+}
+
 export default function FixtureNavBar({ matches, onFilteredMatchesChange }: FixtureNavBarProps) {
   const [filter, setFilter] = useState<FilterType>("ALL");
   const [search, setSearch] = useState("");
@@ -32,16 +48,14 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
     newStage: string = selectedStage,
   ) => {
     const filtered = matches.filter((match) => {
+
+      
+
       const matchesStatus =
         newFilter === "ALL" ? true :
         newFilter === "PENDING" ? match.status === "SCHEDULED" :
         newFilter === "LIVE" ? match.status === "LIVE" :
         match.status === "FINISHED";
-
-      const matchesSearch =
-        newSearch.trim() === "" ? true :
-        match.teamHome.toLowerCase().includes(newSearch.toLowerCase()) ||
-        match.teamAway.toLowerCase().includes(newSearch.toLowerCase());
 
       const matchesGroup =
         newGroup === "ALL" ? true :
@@ -51,7 +65,8 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
         newStage === "ALL" ? true :
         match.groupOrStage === newStage;
 
-      return matchesStatus && matchesSearch && matchesGroup && matchesStage;
+      
+      return  matchesStatus && matchesSearch(match,newSearch) && matchesGroup && matchesStage;
     });
 
     onFilteredMatchesChange(filtered);
@@ -63,8 +78,9 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-    applyFilters(filter, e.target.value);
+    const searchValue = e.target.value || ""
+    setSearch(searchValue);
+    applyFilters(filter, searchValue);
   };
 
   const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -89,15 +105,11 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
       filter === "LIVE" ? match.status === "LIVE" :
       match.status === "FINISHED";
 
-    const matchesSearch =
-      search.trim() === "" ? true :
-      match.teamHome.toLowerCase().includes(search.toLowerCase()) ||
-      match.teamAway.toLowerCase().includes(search.toLowerCase());
-
+    
     const matchesGroup = selectedGroup === "ALL" ? true : match.groupOrStage === selectedGroup;
     const matchesStage = selectedStage === "ALL" ? true : match.groupOrStage === selectedStage;
 
-    return matchesStatus && matchesSearch && matchesGroup && matchesStage;
+    return matchesStatus && matchesSearch(match,search) && matchesGroup && matchesStage;
   }).length;
 
   return (
