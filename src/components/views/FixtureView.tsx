@@ -1,31 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Match, Prediction, User } from "../../lib/mockData";
+import MotivanationalBanner from "@/lib/MotivationalBanner";
+import MatchCard from "@/components/MatchCard/MatchCard";
+import FixtureNavBar from "@/components/navigation/FixtureNavBar";
+import { useFixtureView } from "@/hooks/useFixtureView";
 import MotivanationalBanner from "@/components/banners/MotivationalBanner";
 import { useServerTime } from "@/hooks/useServerTime";
 import { teamsAreDefined } from "@/lib/matchUtils";
 
 interface FixtureViewProps {
-	user: User;
-	matches: Match[];
-	predictions: Prediction[];
-	onSavePrediction: (
-		matchId: string,
-		predictHome: number,
-		predictAway: number,
-	) => Promise<void>;
-	onSelectMatch: (matchId: string) => void;
-	onLogout: () => void;
+  user: User;
+  matches: Match[];
+  predictions: Prediction[];
+  onSelectMatch: (matchId: string) => void;
+  onLogout: () => void;
 }
 
 export default function FixtureView({
-	user,
-	matches,
-	predictions,
-	onSavePrediction,
-	onSelectMatch,
-	onLogout,
+  matches,
+  predictions,
+  onSelectMatch,
 }: FixtureViewProps) {
 	const [filter, setFilter] = useState<"ALL" | "PENDING" | "LIVE" | "FINISHED">(
 		"ALL",
