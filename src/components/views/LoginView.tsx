@@ -1,12 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  updateProfile,
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
-interface LoginViewProps {
-  onLoginSuccess: (user: { displayName: string; email: string }) => void;
-}
+const googleProvider = new GoogleAuthProvider();
 
-export default function LoginView({ onLoginSuccess }: LoginViewProps) {
+export default function LoginView() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,47 +20,58 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!email || !password || (isSignUp && !displayName)) {
-      setError('Por favor, completa todos los campos.');
-      return;
-    }
-
-    setIsLoading(true);
-
-    // Simulate API request delay
-    setTimeout(() => {
-      setIsLoading(false);
-      onLoginSuccess({
-        displayName: isSignUp ? displayName : email.split('@')[0],
-        email: email,
-      });
-    }, 1200);
+  const ensureUserDoc = async (uid: string, displayName: string, email: string, photoURL?: string) => {
+    await fetch('/api/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid, displayName, email, photoURL }),
+    });
   };
 
-  const handleGoogleLogin = () => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError('');
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      if (isSignUp) {
+        const { user } = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(user, { displayName });
+        await ensureUserDoc(user.uid, displayName, email);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+      // onAuthStateChanged in useProdeApp handles the rest
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
       setIsLoading(false);
-      onLoginSuccess({
-        displayName: 'Diego Maradona',
-        email: 'diego@dieguito.com',
-      });
-    }, 1000);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setIsLoading(true);
+    try {
+      const { user } = await signInWithPopup(auth, googleProvider);
+      await ensureUserDoc(
+        user.uid,
+        user.displayName ?? user.email?.split('@')[0] ?? 'Usuario',
+        user.email ?? '',
+        user.photoURL ?? undefined,
+      );
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-4">
-      {/* Background soccer ball or field pattern ambient glow */}
       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-amber-500/5 blur-[100px] pointer-events-none" />
 
-      {/* Main glass card */}
       <div className="relative w-full max-w-md backdrop-blur-xl bg-slate-900/75 p-8 rounded-3xl border border-slate-800 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] transition-all duration-300">
-        
+
         {/* Logo / Title */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 shadow-[0_0_20px_rgba(245,158,11,0.2)] mb-4">
@@ -62,7 +79,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-5.25c-.621 0-1.125.504-1.125 1.125v3.375m9 0ZM9 18.75V10.5m-3.75 3h7.5M12 3a9 9 0 0 1 9 9m-18 0a9 9 0 0 1 9-9Z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
             MUNDIAL PRODE
           </h1>
           <p className="text-sm text-slate-400 mt-2">
@@ -70,54 +87,30 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           </p>
         </div>
 
-        {/* Info Mock Banner */}
-        <div className="mb-6 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 text-center flex items-center gap-2 justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0">
-            <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a.75.75 0 0 0 0 1.5h.253a.25.25 0 0 1 .244.304l-.459 2.066A1.75 1.75 0 0 0 10.747 15H11a.75.75 0 0 0 0-1.5h-.253a.25.25 0 0 1-.244-.304l.459-2.066A1.75 1.75 0 0 0 9.253 9H9Z" clipRule="evenodd" />
-          </svg>
-          <span>Modo Demo: Ingresa cualquier dato para iniciar sesión.</span>
-        </div>
-
         {/* Tab Headers */}
         <div className="flex border-b border-slate-800 mb-6">
           <button
             type="button"
-            className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-colors ${
-              !isSignUp
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-            onClick={() => {
-              setIsSignUp(false);
-              setError('');
-            }}
+            className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-colors ${!isSignUp ? 'border-amber-500 text-amber-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+            onClick={() => { setIsSignUp(false); setError(''); }}
           >
             Iniciar Sesión
           </button>
           <button
             type="button"
-            className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-colors ${
-              isSignUp
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-            onClick={() => {
-              setIsSignUp(true);
-              setError('');
-            }}
+            className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-colors ${isSignUp ? 'border-amber-500 text-amber-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+            onClick={() => { setIsSignUp(true); setError(''); }}
           >
             Crear Cuenta
           </button>
         </div>
 
-        {/* Error Alert */}
         {error && (
           <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
             {error}
           </div>
         )}
 
-        {/* Login/Signup Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
             <div>
@@ -160,10 +153,10 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
               placeholder="••••••••"
               className="w-full px-4 py-3 rounded-xl bg-slate-950/50 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all text-sm"
               required
+              minLength={6}
             />
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
@@ -183,7 +176,6 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           </button>
         </form>
 
-        {/* Divider */}
         <div className="relative my-6 flex items-center justify-center">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-800" />
@@ -193,14 +185,13 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           </span>
         </div>
 
-        {/* Google Login Button */}
         <button
           type="button"
           onClick={handleGoogleLogin}
           disabled={isLoading}
           className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-900 border border-slate-800 text-slate-200 text-sm font-semibold active:scale-[0.98] transition-all duration-200"
         >
-          <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <g transform="matrix(1, 0, 0, 1, 0, 0)">
               <path d="M21.35,11.1H12v2.7h5.38c-0.24,1.28 -0.96,2.37 -2.04,3.1v2.57h3.3c1.93,-1.78 3.04,-4.4 3.04,-7.43C21.68,11.77 21.56,11.4 21.35,11.1z" fill="#4285F4" />
               <path d="M12,20.58c2.59,0 4.77,-0.86 6.36,-2.33l-3.3,-2.57c-0.91,0.61 -2.08,0.98 -3.06,0.98 -2.36,0 -4.36,-1.59 -5.07,-3.72H3.48v2.66c1.57,3.12 4.82,5.27 8.52,5.27z" fill="#34A853" />
@@ -210,8 +201,24 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           </svg>
           <span>Acceder con Google</span>
         </button>
-
       </div>
     </div>
   );
+}
+
+function getErrorMessage(err: unknown): string {
+  if (typeof err === 'object' && err !== null && 'code' in err) {
+    const code = (err as { code: string }).code;
+    const messages: Record<string, string> = {
+      'auth/user-not-found': 'No existe una cuenta con ese email.',
+      'auth/wrong-password': 'Contraseña incorrecta.',
+      'auth/email-already-in-use': 'Ya existe una cuenta con ese email.',
+      'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
+      'auth/invalid-email': 'El formato del email no es válido.',
+      'auth/popup-closed-by-user': 'Se cerró la ventana de Google.',
+      'auth/invalid-credential': 'Email o contraseña incorrectos.',
+    };
+    return messages[code] ?? 'Ocurrió un error. Intentá de nuevo.';
+  }
+  return 'Ocurrió un error. Intentá de nuevo.';
 }

@@ -1,42 +1,48 @@
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { useProde } from '../../../context/ProdeContext';
-import MatchDetailView from '../../../components/views/MatchDetailView';
+import React, { useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { useProde } from "../../../context/ProdeContext";
+import MatchDetailView from "../../../components/views/MatchDetailView";
 
 export default function MatchDetailPage() {
-  const router = useRouter();
-  const params = useParams();
-  const matchId = params.id as string;
+	const router = useRouter();
+	const params = useParams();
+	const matchId = params.id as string;
 
-  const { isLoggedIn, matches, predictions, currentUser, handleSavePrediction } = useProde();
+	const {
+		isLoggedIn,
+		isAuthLoading,
+		matches,
+		predictions,
+		currentUser,
+		handleSavePrediction,
+	} = useProde();
 
-  useEffect(() => {
-    if (!isLoggedIn) router.push('/login');
-  }, [isLoggedIn, router]);
+	useEffect(() => {
+		if (!isAuthLoading && !isLoggedIn) router.push("/login");
+	}, [isLoggedIn, isAuthLoading, router]);
 
-  if (!isLoggedIn) return null;
+	if (isAuthLoading || !isLoggedIn || !currentUser) return null;
 
-  const match = matches.find((m) => m.matchId === matchId);
-  const prediction = predictions.find(
-    (p) => p.matchId === matchId && p.uid === currentUser.uid
-  );
+	const match = matches.find((m) => m.matchId === matchId);
+	const prediction = predictions.find(
+		(p) => p.matchId === matchId && p.uid === currentUser.uid,
+	);
 
-  // If matchId doesn't correspond to any match, go back
-  if (!match) {
-    router.replace('/fixture');
-    return null;
-  }
+	if (!match) {
+		router.replace("/fixture");
+		return null;
+	}
 
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-      <MatchDetailView
-        match={match}
-        prediction={prediction}
-        onSavePrediction={handleSavePrediction}
-        onBack={() => router.back()}
-      />
-    </div>
-  );
+	return (
+		<div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+			<MatchDetailView
+				match={match}
+				prediction={prediction}
+				onSavePrediction={handleSavePrediction}
+				onBack={() => router.back()}
+			/>
+		</div>
+	);
 }
