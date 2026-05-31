@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Match, Prediction, User } from "../../lib/mockData";
 import MotivanationalBanner from "@/lib/MotivationalBanner";
 import { useServerTime } from "@/hooks/useServerTime";
+import { teamsAreDefined } from "@/lib/matchUtils";
 
 interface FixtureViewProps {
 	user: User;
@@ -181,8 +182,11 @@ export default function FixtureView({
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 						{filteredMatches.map((match) => {
 							const pred = predictions.find((p) => p.matchId === match.matchId);
+							const tbdTeams = !teamsAreDefined(match);
 							const locked =
-								isMatchLocked(match.dateTime) || match.status !== "SCHEDULED";
+								tbdTeams ||
+								isMatchLocked(match.dateTime) ||
+								match.status !== "SCHEDULED";
 
 							const homeVal = localScores[match.matchId]?.home ?? "";
 							const awayVal = localScores[match.matchId]?.away ?? "";
@@ -227,36 +231,26 @@ export default function FixtureView({
 													Finalizado
 												</span>
 											)}
-											{match.status === "SCHEDULED" &&
+											{match.status === "SCHEDULED" && tbdTeams && (
+												<span className="flex items-center gap-1 bg-slate-700/50 text-slate-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-slate-600/40">
+													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+														<path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+													</svg>
+													Por definir
+												</span>
+											)}
+											{match.status === "SCHEDULED" && !tbdTeams &&
 												(locked ? (
 													<span className="flex items-center gap-1 bg-amber-500/10 text-amber-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-amber-500/20">
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															viewBox="0 0 20 20"
-															fill="currentColor"
-															className="w-3 h-3"
-														>
-															<path
-																fillRule="evenodd"
-																d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z"
-																clipRule="evenodd"
-															/>
+														<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+															<path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
 														</svg>
 														Cerrado
 													</span>
 												) : (
 													<span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-emerald-500/20 animate-pulse">
-														<svg
-															xmlns="http://www.w3.org/2000/svg"
-															viewBox="0 0 20 20"
-															fill="currentColor"
-															className="w-3 h-3"
-														>
-															<path
-																fillRule="evenodd"
-																d="M14.5 9h-4.75V5.5a3.25 3.25 0 1 0-6.5 0v3.75A2.25 2.25 0 0 0 1 11.5v6A2.25 2.25 0 0 0 3.25 19.75h11.5A2.25 2.25 0 0 0 17 17.5v-6A2.25 2.25 0 0 0 14.5 9Zm-8-3.5a1.75 1.75 0 0 1 3.5 0V9h-3.5V5.5Z"
-																clipRule="evenodd"
-															/>
+														<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+															<path fillRule="evenodd" d="M14.5 9h-4.75V5.5a3.25 3.25 0 1 0-6.5 0v3.75A2.25 2.25 0 0 0 1 11.5v6A2.25 2.25 0 0 0 3.25 19.75h11.5A2.25 2.25 0 0 0 17 17.5v-6A2.25 2.25 0 0 0 14.5 9Zm-8-3.5a1.75 1.75 0 0 1 3.5 0V9h-3.5V5.5Z" clipRule="evenodd" />
 														</svg>
 														Abierto
 													</span>
@@ -268,17 +262,20 @@ export default function FixtureView({
 									<div className="flex items-center justify-between gap-4 py-2">
 										{/* Team Home */}
 										<div className="flex-1 flex flex-col items-center text-center gap-2">
-											<img
-												src={match.teamHomeFlag}
-												alt={match.teamHome}
-												className="w-12 h-8 object-cover rounded-md shadow-md border border-slate-800"
-												onError={(e) => {
-													// Fallback to stylized box if image fails
-													(e.target as HTMLElement).style.display = "none";
-												}}
-											/>
-											<span className="text-xs sm:text-sm font-semibold truncate max-w-[100px] sm:max-w-none">
-												{match.teamHome}
+											{tbdTeams ? (
+												<div className="w-12 h-8 rounded-md bg-slate-800/60 border border-slate-700/40 flex items-center justify-center">
+													<span className="text-[10px] text-slate-600 font-bold">?</span>
+												</div>
+											) : (
+												<img
+													src={match.teamHomeFlag}
+													alt={match.teamHome}
+													className="w-12 h-8 object-cover rounded-md shadow-md border border-slate-800"
+													onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
+												/>
+											)}
+											<span className={`text-xs sm:text-sm font-semibold truncate max-w-[100px] sm:max-w-none ${tbdTeams ? "text-slate-500 italic" : ""}`}>
+												{tbdTeams ? "Por definir" : match.teamHome}
 											</span>
 										</div>
 
@@ -287,22 +284,24 @@ export default function FixtureView({
 											className="flex items-center gap-2"
 											onClick={(e) => e.stopPropagation()}
 										>
-											{match.status === "FINISHED" ||
-											match.status === "LIVE" ? (
-												/* REAL SCORES (For finished or live) */
+											{tbdTeams ? (
+												/* TBD — teams not yet decided */
+												<span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide text-center leading-tight px-1">
+													Equipos<br />pendientes
+												</span>
+											) : match.status === "FINISHED" || match.status === "LIVE" ? (
+												/* REAL SCORES */
 												<div className="flex items-center gap-3">
 													<span className="text-xl font-extrabold px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800">
 														{match.scoreHome}
 													</span>
-													<span className="text-slate-500 font-bold text-sm">
-														:
-													</span>
+													<span className="text-slate-500 font-bold text-sm">:</span>
 													<span className="text-xl font-extrabold px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800">
 														{match.scoreAway}
 													</span>
 												</div>
 											) : (
-												/* EDITABLE/LOCKED PREDICTIONS (For Scheduled) */
+												/* EDITABLE/LOCKED PREDICTIONS */
 												<div className="flex items-center gap-1.5">
 													<input
 														type="text"
@@ -310,13 +309,7 @@ export default function FixtureView({
 														value={homeVal}
 														disabled={locked}
 														placeholder="-"
-														onChange={(e) =>
-															handleInputChange(
-																match.matchId,
-																"home",
-																e.target.value,
-															)
-														}
+														onChange={(e) => handleInputChange(match.matchId, "home", e.target.value)}
 														className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800 text-center font-bold text-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-950/70"
 													/>
 													<span className="text-slate-600 font-bold">-</span>
@@ -326,13 +319,7 @@ export default function FixtureView({
 														value={awayVal}
 														disabled={locked}
 														placeholder="-"
-														onChange={(e) =>
-															handleInputChange(
-																match.matchId,
-																"away",
-																e.target.value,
-															)
-														}
+														onChange={(e) => handleInputChange(match.matchId, "away", e.target.value)}
 														className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800 text-center font-bold text-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-950/70"
 													/>
 												</div>
@@ -341,16 +328,20 @@ export default function FixtureView({
 
 										{/* Team Away */}
 										<div className="flex-1 flex flex-col items-center text-center gap-2">
-											<img
-												src={match.teamAwayFlag}
-												alt={match.teamAway}
-												className="w-12 h-8 object-cover rounded-md shadow-md border border-slate-800"
-												onError={(e) => {
-													(e.target as HTMLElement).style.display = "none";
-												}}
-											/>
-											<span className="text-xs sm:text-sm font-semibold truncate max-w-[100px] sm:max-w-none">
-												{match.teamAway}
+											{tbdTeams ? (
+												<div className="w-12 h-8 rounded-md bg-slate-800/60 border border-slate-700/40 flex items-center justify-center">
+													<span className="text-[10px] text-slate-600 font-bold">?</span>
+												</div>
+											) : (
+												<img
+													src={match.teamAwayFlag}
+													alt={match.teamAway}
+													className="w-12 h-8 object-cover rounded-md shadow-md border border-slate-800"
+													onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
+												/>
+											)}
+											<span className={`text-xs sm:text-sm font-semibold truncate max-w-[100px] sm:max-w-none ${tbdTeams ? "text-slate-500 italic" : ""}`}>
+												{tbdTeams ? "Por definir" : match.teamAway}
 											</span>
 										</div>
 									</div>
@@ -364,7 +355,11 @@ export default function FixtureView({
 
 										{/* Prediction points earned or save actions */}
 										<div onClick={(e) => e.stopPropagation()}>
-											{match.status === "FINISHED" ? (
+											{tbdTeams ? (
+												<span className="text-[10px] text-slate-500 italic font-semibold">
+													Equipos por confirmar
+												</span>
+											) : match.status === "FINISHED" ? (
 												pred && pred.pointsEarned !== null ? (
 													<div
 														className={`px-2.5 py-1 rounded-full text-xs font-extrabold ${getPointsBadgeColor(pred.pointsEarned)}`}
