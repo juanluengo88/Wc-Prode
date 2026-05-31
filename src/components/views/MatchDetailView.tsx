@@ -4,9 +4,12 @@ import React, { useState, useEffect } from "react";
 import { Match, Prediction } from "../../lib/mockData";
 import { useServerTime } from "@/hooks/useServerTime";
 import { teamsAreDefined } from "@/lib/matchUtils";
+import { useRouter } from "next/navigation";
+import { Team } from "@/lib/footballDataApi";
 
 interface MatchDetailViewProps {
 	match: Match;
+	teams: Team[];
 	prediction: Prediction | undefined;
 	onSavePrediction: (
 		matchId: string,
@@ -18,10 +21,12 @@ interface MatchDetailViewProps {
 
 export default function MatchDetailView({
 	match,
+	teams,
 	prediction,
 	onSavePrediction,
 	onBack,
 }: MatchDetailViewProps) {
+	const router = useRouter();
 	const [homeScore, setHomeScore] = useState(
 		prediction?.predictHome.toString() ?? "",
 	);
@@ -79,6 +84,10 @@ export default function MatchDetailView({
 		const timer = setInterval(calculateTimeLeft, 1000);
 		return () => clearInterval(timer);
 	}, [match]);
+
+	const getTeamByName = (teamName: string): Team | undefined => {
+		return teams.find((team) => team.name === teamName);
+	};
 
 	const handleInputChange = (team: "home" | "away", value: string) => {
 		if (value !== "" && !/^\d+$/.test(value)) return;
@@ -177,11 +186,19 @@ export default function MatchDetailView({
 						<div className="flex-1 flex flex-col items-center text-center gap-3">
 							<div className="relative group">
 								<div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-indigo-500 to-amber-500 opacity-20 blur-sm group-hover:opacity-40 transition-opacity" />
-								<img
-									src={match.teamHomeFlag}
-									alt={match.teamHome}
-									className="relative w-20 h-14 sm:w-28 sm:h-20 object-cover rounded-2xl border border-slate-700/60 shadow-xl"
-								/>
+								<button
+									onClick={(e) => {
+										router.push(
+											`/team/${getTeamByName(match.teamHome)?.teamId}`,
+										);
+									}}
+								>
+									<img
+										src={match.teamHomeFlag}
+										alt={match.teamHome}
+										className="relative w-20 h-14 sm:w-28 sm:h-20 object-cover rounded-2xl border border-slate-700/60 shadow-xl"
+									/>
+								</button>
 							</div>
 							<h3 className="text-lg sm:text-2xl font-black text-white">
 								{match.teamHome}
@@ -224,11 +241,19 @@ export default function MatchDetailView({
 						<div className="flex-1 flex flex-col items-center text-center gap-3">
 							<div className="relative group">
 								<div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-indigo-500 to-amber-500 opacity-20 blur-sm group-hover:opacity-40 transition-opacity" />
-								<img
-									src={match.teamAwayFlag}
-									alt={match.teamAway}
-									className="relative w-20 h-14 sm:w-28 sm:h-20 object-cover rounded-2xl border border-slate-700/60 shadow-xl"
-								/>
+								<button
+									onClick={(e) => {
+										router.push(
+											`/team/${getTeamByName(match.teamAway)?.teamId}`,
+										);
+									}}
+								>
+									<img
+										src={match.teamAwayFlag}
+										alt={match.teamAway}
+										className="relative w-20 h-14 sm:w-28 sm:h-20 object-cover rounded-2xl border border-slate-700/60 shadow-xl"
+									/>
+								</button>
 							</div>
 							<h3 className="text-lg sm:text-2xl font-black text-white">
 								{match.teamAway}
@@ -246,115 +271,136 @@ export default function MatchDetailView({
 						{!teamsAreDefined(match) ? (
 							<div className="flex flex-col items-center gap-3 py-4">
 								<div className="w-12 h-12 rounded-full bg-slate-800/60 border border-slate-700/40 flex items-center justify-center">
-									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-slate-500">
-										<path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										strokeWidth={1.5}
+										stroke="currentColor"
+										className="w-6 h-6 text-slate-500"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"
+										/>
 									</svg>
 								</div>
-								<p className="text-sm font-bold text-slate-300 text-center">Equipos pendientes de clasificación</p>
+								<p className="text-sm font-bold text-slate-300 text-center">
+									Equipos pendientes de clasificación
+								</p>
 								<p className="text-xs text-slate-500 text-center max-w-xs">
-									Los equipos de este partido se definirán cuando finalice la fase anterior. Los pronósticos se habilitarán una vez confirmados.
+									Los equipos de este partido se definirán cuando finalice la
+									fase anterior. Los pronósticos se habilitarán una vez
+									confirmados.
 								</p>
 							</div>
 						) : (
-						<>
-						<h4 className="text-sm font-bold text-slate-300 mb-6 uppercase tracking-wider text-center">
-							{isLocked ? "Tu pronóstico registrado" : "Ingresa tu pronóstico"}
-						</h4>
+							<>
+								<h4 className="text-sm font-bold text-slate-300 mb-6 uppercase tracking-wider text-center">
+									{isLocked
+										? "Tu pronóstico registrado"
+										: "Ingresa tu pronóstico"}
+								</h4>
 
-						<form
-							onSubmit={handleSave}
-							className="max-w-md mx-auto space-y-6 flex flex-col items-center"
-						>
-							{/* Form inputs */}
-							<div className="flex items-center gap-6 justify-center">
-								<div className="flex flex-col items-center gap-2">
-									<span className="text-xs text-slate-400 font-semibold">
-										{match.teamHome}
-									</span>
-									<input
-										type="text"
-										maxLength={2}
-										value={homeScore}
-										disabled={isLocked}
-										onChange={(e) => handleInputChange("home", e.target.value)}
-										placeholder="0"
-										className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
-									/>
-								</div>
-
-								<span className="text-slate-600 font-black text-3xl mt-6">
-									-
-								</span>
-
-								<div className="flex flex-col items-center gap-2">
-									<span className="text-xs text-slate-400 font-semibold">
-										{match.teamAway}
-									</span>
-									<input
-										type="text"
-										maxLength={2}
-										value={awayScore}
-										disabled={isLocked}
-										onChange={(e) => handleInputChange("away", e.target.value)}
-										placeholder="0"
-										className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
-									/>
-								</div>
-							</div>
-
-							{/* Alert Feedback Messages */}
-							{showSuccess && (
-								<div className="w-full p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm text-center font-semibold">
-									¡Pronóstico guardado exitosamente!
-								</div>
-							)}
-
-							{/* Actions */}
-							{!isLocked ? (
-								<button
-									type="submit"
-									disabled={!isFormComplete || isSaving}
-									className="w-full max-w-xs py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-bold text-sm tracking-wide hover:from-amber-400 hover:to-yellow-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-amber-500/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+								<form
+									onSubmit={handleSave}
+									className="max-w-md mx-auto space-y-6 flex flex-col items-center"
 								>
-									{isSaving ? (
-										<>
-											<svg
-												className="animate-spin h-5 w-5 text-slate-950"
-												fill="none"
-												viewBox="0 0 24 24"
-											>
-												<circle
-													className="opacity-25"
-													cx="12"
-													cy="12"
-													r="10"
-													stroke="currentColor"
-													strokeWidth="4"
-												/>
-												<path
-													className="opacity-75"
-													fill="currentColor"
-													d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-												/>
-											</svg>
-											<span>Guardando...</span>
-										</>
-									) : (
-										<span>
-											{prediction
-												? "Actualizar Pronóstico"
-												: "Guardar Pronóstico"}
+									{/* Form inputs */}
+									<div className="flex items-center gap-6 justify-center">
+										<div className="flex flex-col items-center gap-2">
+											<span className="text-xs text-slate-400 font-semibold">
+												{match.teamHome}
+											</span>
+											<input
+												type="text"
+												maxLength={2}
+												value={homeScore}
+												disabled={isLocked}
+												onChange={(e) =>
+													handleInputChange("home", e.target.value)
+												}
+												placeholder="0"
+												className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
+											/>
+										</div>
+
+										<span className="text-slate-600 font-black text-3xl mt-6">
+											-
 										</span>
+
+										<div className="flex flex-col items-center gap-2">
+											<span className="text-xs text-slate-400 font-semibold">
+												{match.teamAway}
+											</span>
+											<input
+												type="text"
+												maxLength={2}
+												value={awayScore}
+												disabled={isLocked}
+												onChange={(e) =>
+													handleInputChange("away", e.target.value)
+												}
+												placeholder="0"
+												className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-50 disabled:cursor-not-allowed"
+											/>
+										</div>
+									</div>
+
+									{/* Alert Feedback Messages */}
+									{showSuccess && (
+										<div className="w-full p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm text-center font-semibold">
+											¡Pronóstico guardado exitosamente!
+										</div>
 									)}
-								</button>
-							) : (
-								<div className="text-center p-3 text-xs text-slate-500 bg-slate-950/40 border border-slate-900 rounded-xl">
-									Formulario bloqueado por inicio de partido o cierre de
-									ventana.
-								</div>
-							)}
-						</form>
-						</>
+
+									{/* Actions */}
+									{!isLocked ? (
+										<button
+											type="submit"
+											disabled={!isFormComplete || isSaving}
+											className="w-full max-w-xs py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-bold text-sm tracking-wide hover:from-amber-400 hover:to-yellow-500 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-amber-500/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+										>
+											{isSaving ? (
+												<>
+													<svg
+														className="animate-spin h-5 w-5 text-slate-950"
+														fill="none"
+														viewBox="0 0 24 24"
+													>
+														<circle
+															className="opacity-25"
+															cx="12"
+															cy="12"
+															r="10"
+															stroke="currentColor"
+															strokeWidth="4"
+														/>
+														<path
+															className="opacity-75"
+															fill="currentColor"
+															d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+														/>
+													</svg>
+													<span>Guardando...</span>
+												</>
+											) : (
+												<span>
+													{prediction
+														? "Actualizar Pronóstico"
+														: "Guardar Pronóstico"}
+												</span>
+											)}
+										</button>
+									) : (
+										<div className="text-center p-3 text-xs text-slate-500 bg-slate-950/40 border border-slate-900 rounded-xl">
+											Formulario bloqueado por inicio de partido o cierre de
+											ventana.
+										</div>
+									)}
+								</form>
+							</>
 						)}
 					</div>
 				)}

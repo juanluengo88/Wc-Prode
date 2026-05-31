@@ -31,6 +31,7 @@ export interface Squad {
 }
 
 export interface Team {
+	teamId: string;
 	name: string;
 	coach: string;
 	squad: Squad[];

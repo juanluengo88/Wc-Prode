@@ -14,6 +14,7 @@ export default function MatchDetailPage() {
 		isLoggedIn,
 		isAuthLoading,
 		matches,
+		teams,
 		predictions,
 		currentUser,
 		handleSavePrediction,
@@ -39,6 +40,7 @@ export default function MatchDetailPage() {
 		<div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
 			<MatchDetailView
 				match={match}
+				teams={teams}
 				prediction={prediction}
 				onSavePrediction={handleSavePrediction}
 				onBack={() => router.back()}
