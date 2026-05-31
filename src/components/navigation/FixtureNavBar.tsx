@@ -1,7 +1,7 @@
 // components/FixtureNavBar.tsx
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, ReactNode } from "react";
 import { Match } from "@/lib/mockData";
 
 type FilterType = "ALL" | "PENDING" | "LIVE" | "FINISHED";
@@ -12,19 +12,21 @@ interface FixtureNavBarProps {
 }
 
 
-function canBeFiltered(match : Match) : Boolean{
-  return  (match.teamAway != null || match.teamHome !=null)
+
+function hasTeams(match: Match): boolean {
+  return !!(match.teamHome && match.teamAway);
 }
 
-function matchesSearch(match : Match, newSearch : string) : Boolean {
+function matchesSearch(match: Match, newSearch: string): boolean {
   
-  if(canBeFiltered(match)){
-    return (newSearch.trim() === "" ? true :
-        (match.teamHome || "").toLowerCase().includes(newSearch.toLowerCase()) ||
-        (match.teamAway || "").toLowerCase().includes(newSearch.toLowerCase()))
-  }
-  console.log(match.teamAway)
-  return false
+  if (newSearch.trim() === "") return true;
+
+  if (!hasTeams(match)) return false;
+
+  return (
+    match.teamHome.toLowerCase().includes(newSearch.toLowerCase()) ||
+    match.teamAway.toLowerCase().includes(newSearch.toLowerCase())
+  );
 }
 
 export default function FixtureNavBar({ matches, onFilteredMatchesChange }: FixtureNavBarProps) {
@@ -32,6 +34,7 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
   const [search, setSearch] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string>("ALL");
   const [selectedStage, setSelectedStage] = useState<string>("ALL");
+  const [filteredCount, setFilteredCount] = useState<Number>(matches.length);
 
   const { groups, stages } = useMemo(() => {
     const all = Array.from(new Set(matches.map((m) => m.groupOrStage))).sort();
@@ -49,8 +52,6 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
   ) => {
     const filtered = matches.filter((match) => {
 
-      
-
       const matchesStatus =
         newFilter === "ALL" ? true :
         newFilter === "PENDING" ? match.status === "SCHEDULED" :
@@ -65,10 +66,10 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
         newStage === "ALL" ? true :
         match.groupOrStage === newStage;
 
-      
-      return  matchesStatus && matchesSearch(match,newSearch) && matchesGroup && matchesStage;
+      return  matchesStatus &&  matchesGroup && matchesStage && matchesSearch(match,newSearch);
     });
 
+    setFilteredCount(filtered.length)
     onFilteredMatchesChange(filtered);
   };
 
@@ -86,7 +87,6 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
   const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     setSelectedGroup(val);
-    // si elegís un grupo, reseteás el stage y viceversa
     setSelectedStage("ALL");
     applyFilters(filter, search, val, "ALL");
   };
@@ -98,19 +98,7 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
     applyFilters(filter, search, "ALL", val);
   };
 
-  const filteredCount = matches.filter((match) => {
-    const matchesStatus =
-      filter === "ALL" ? true :
-      filter === "PENDING" ? match.status === "SCHEDULED" :
-      filter === "LIVE" ? match.status === "LIVE" :
-      match.status === "FINISHED";
-
-    
-    const matchesGroup = selectedGroup === "ALL" ? true : match.groupOrStage === selectedGroup;
-    const matchesStage = selectedStage === "ALL" ? true : match.groupOrStage === selectedStage;
-
-    return matchesStatus && matchesSearch(match,search) && matchesGroup && matchesStage;
-  }).length;
+  
 
   return (
     <div className="flex flex-col gap-4 border-b border-slate-800 pb-4">
@@ -136,7 +124,7 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
         </div>
 
         <span className="text-xs text-slate-400">
-          Mostrando <strong className="text-slate-200">{filteredCount}</strong> partidos
+          Mostrando <strong className="text-slate-200">{filteredCount as ReactNode}</strong> partidos
         </span>
       </div>
 

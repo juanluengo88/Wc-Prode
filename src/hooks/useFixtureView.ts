@@ -40,11 +40,17 @@ export function useFixtureView({ matches, predictions }: UseFixtureViewProps) {
     return "";
   };
 
+  const teamsAreDefined = (match : Match) => {
+    return Boolean(match.teamHome?.trim()) && Boolean(match.teamAway?.trim());
+  }
+  
+
   return {
     filteredMatches,
     setFilteredMatches,
     isMatchLocked,
     getPrediction,
     getPointsBadgeColor,
+    teamsAreDefined
   };
 }

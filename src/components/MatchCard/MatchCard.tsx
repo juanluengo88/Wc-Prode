@@ -6,6 +6,7 @@ interface MatchCardProps {
   match: Match;
   pred?: Prediction;
   locked?: boolean;
+  tbdTeams?: boolean;
   homeVal?: string;
   awayVal?: string;
   savingId?: string | null;
@@ -22,6 +23,7 @@ export default function MatchCard({
   match,
   pred,
   locked = false,
+  tbdTeams = false,
   homeVal = "",
   awayVal = "",
   savingId = null,
@@ -61,7 +63,15 @@ export default function MatchCard({
               Finalizado
             </span>
           )}
-          {match.status === "SCHEDULED" && (
+          {match.status === "SCHEDULED" && tbdTeams && (
+            <span className="flex items-center gap-1 bg-slate-700/50 text-slate-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-slate-600/40">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+              </svg>
+              Por definir
+            </span>
+          )}
+          {match.status === "SCHEDULED" && !tbdTeams && (
             locked ? (
               <span className="flex items-center gap-1 bg-amber-500/10 text-amber-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-amber-500/20">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
@@ -85,20 +95,30 @@ export default function MatchCard({
       <div className="flex items-center justify-between gap-4 py-2">
         {/* Team Home */}
         <div className="flex-1 flex flex-col items-center text-center gap-2">
-          <img
-            src={match.teamHomeFlag}
-            alt={match.teamHome}
-            className="w-12 h-8 object-cover rounded-md shadow-md border border-slate-800"
-            onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
-          />
-          <span className="text-xs sm:text-sm font-semibold truncate max-w-[100px] sm:max-w-none">
-            {match.teamHome}
+          {tbdTeams ? (
+            <div className="w-12 h-8 rounded-md bg-slate-800/60 border border-slate-700/40 flex items-center justify-center">
+              <span className="text-[10px] text-slate-600 font-bold">?</span>
+            </div>
+          ) : (
+            <img
+              src={match.teamHomeFlag}
+              alt={match.teamHome}
+              className="w-12 h-8 object-cover rounded-md shadow-md border border-slate-800"
+              onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
+            />
+          )}
+          <span className={`text-xs sm:text-sm font-semibold truncate max-w-[100px] sm:max-w-none ${tbdTeams ? "text-slate-500 italic" : ""}`}>
+            {tbdTeams ? "Por definir" : match.teamHome}
           </span>
         </div>
 
         {/* Score / Inputs */}
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          {match.status === "FINISHED" || match.status === "LIVE" ? (
+          {tbdTeams ? (
+            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide text-center leading-tight px-1">
+              Equipos<br />pendientes
+            </span>
+          ) : match.status === "FINISHED" || match.status === "LIVE" ? (
             <div className="flex items-center gap-3">
               <span className="text-xl font-extrabold px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800">
                 {match.scoreHome ?? "-"}
@@ -110,13 +130,9 @@ export default function MatchCard({
             </div>
           ) : readonly ? (
             <div className="flex items-center gap-3">
-              <span className="text-xl font-extrabold px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-500">
-                -
-              </span>
+              <span className="text-xl font-extrabold px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-500">-</span>
               <span className="text-slate-500 font-bold text-sm">:</span>
-              <span className="text-xl font-extrabold px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-500">
-                -
-              </span>
+              <span className="text-xl font-extrabold px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-500">-</span>
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
@@ -145,14 +161,20 @@ export default function MatchCard({
 
         {/* Team Away */}
         <div className="flex-1 flex flex-col items-center text-center gap-2">
-          <img
-            src={match.teamAwayFlag}
-            alt={match.teamAway}
-            className="w-12 h-8 object-cover rounded-md shadow-md border border-slate-800"
-            onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
-          />
-          <span className="text-xs sm:text-sm font-semibold truncate max-w-[100px] sm:max-w-none">
-            {match.teamAway}
+          {tbdTeams ? (
+            <div className="w-12 h-8 rounded-md bg-slate-800/60 border border-slate-700/40 flex items-center justify-center">
+              <span className="text-[10px] text-slate-600 font-bold">?</span>
+            </div>
+          ) : (
+            <img
+              src={match.teamAwayFlag}
+              alt={match.teamAway}
+              className="w-12 h-8 object-cover rounded-md shadow-md border border-slate-800"
+              onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
+            />
+          )}
+          <span className={`text-xs sm:text-sm font-semibold truncate max-w-[100px] sm:max-w-none ${tbdTeams ? "text-slate-500 italic" : ""}`}>
+            {tbdTeams ? "Por definir" : match.teamAway}
           </span>
         </div>
       </div>
@@ -175,7 +197,12 @@ export default function MatchCard({
                 Finalizado
               </span>
             )}
-            {match.status === "SCHEDULED" && (
+            {match.status === "SCHEDULED" && tbdTeams && (
+              <span className="text-[10px] text-slate-500 italic font-semibold">
+                Equipos por confirmar
+              </span>
+            )}
+            {match.status === "SCHEDULED" && !tbdTeams && (
               <span className="text-[10px] text-slate-500 font-semibold uppercase">
                 Sin iniciar
               </span>
@@ -183,7 +210,11 @@ export default function MatchCard({
           </>
         ) : (
           <div onClick={(e) => e.stopPropagation()}>
-            {match.status === "FINISHED" ? (
+            {tbdTeams ? (
+              <span className="text-[10px] text-slate-500 italic font-semibold">
+                Equipos por confirmar
+              </span>
+            ) : match.status === "FINISHED" ? (
               pred && pred.pointsEarned !== null ? (
                 <div className={`px-2.5 py-1 rounded-full text-xs font-extrabold ${getPointsBadgeColor?.(pred.pointsEarned)}`}>
                   {pred.pointsEarned === 3 && "Exacto +3 pts"}

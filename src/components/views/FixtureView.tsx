@@ -26,6 +26,7 @@ export default function FixtureView({
     isMatchLocked,
     getPrediction,
     getPointsBadgeColor,
+    teamsAreDefined
   } = useFixtureView({ matches, predictions });
 
   return (
@@ -60,17 +61,25 @@ export default function FixtureView({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredMatches.map((match) => (
-              <MatchCard
-                key={match.matchId}
-                match={match}
-                pred={getPrediction(match.matchId)}
-                locked={isMatchLocked(match.dateTime) || match.status !== "SCHEDULED"}
-                onSelectMatch={onSelectMatch}
-                getPointsBadgeColor={getPointsBadgeColor}
-                readonly={true}
-              />
-            ))}
+            {filteredMatches.map((match) => {
+              const tbdTeams = !teamsAreDefined(match);
+              return (
+                <MatchCard
+                  key={match.matchId}
+                  match={match}
+                  pred={getPrediction(match.matchId)}
+                  locked={
+                    tbdTeams ||
+                    isMatchLocked(match.dateTime) ||
+                    match.status !== "SCHEDULED"
+                  }
+                  tbdTeams={tbdTeams}
+                  onSelectMatch={onSelectMatch}
+                  getPointsBadgeColor={getPointsBadgeColor}
+                  readonly={true}
+                />
+              );
+            })}
           </div>
         )}
       </main>
