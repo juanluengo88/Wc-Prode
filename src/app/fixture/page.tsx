@@ -35,7 +35,6 @@ export default function FixturePage() {
 					user={currentUser}
 					matches={matches}
 					predictions={predictions.filter((p) => p.uid === currentUser.uid)}
-					onSavePrediction={handleSavePrediction}
 					onSelectMatch={(matchId) => router.push(`/match/${matchId}`)}
 					onLogout={handleLogout}
 				/>

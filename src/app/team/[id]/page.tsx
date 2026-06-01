@@ -1,14 +1,17 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useProde } from "../../../context/ProdeContext";
+import TeamView from "@/components/views/TeamView";
 
-export default function TeamView() {
-	const router = useRouter();
-	const params = useParams();
-	const teamId = params.id as string;
+export default function Team() {
+  const params = useParams();
+  const id = params.id as string; 
 
-	const { isLoggedIn, isAuthLoading, teams, currentUser } = useProde();
+  const { isLoggedIn, isAuthLoading, teams, currentUser } = useProde();
+  
+  
+  if (isAuthLoading) return <div className="text-center p-10">Verificando sesión...</div>;
 
-	return <div>{teamId}</div>;
+  return <TeamView teamId={id} />;
 }
