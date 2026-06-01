@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  // ID del partido de tu captura (puedes volverlo dinámico después)
+  // ID del partido de tu captura
   const juegoId = "401864055"; 
 
-  console.log(`[API-Scraper] Consultando feed oficial para el juegoId: ${juegoId}...`);
+  console.log(`[API-Scraper] Consultando feed para obtener jugadores e incidencias + formación...`);
 
   try {
-    // URL de la API interna de eventos de ESPN (Pública y en formato JSON nativo)
+    // API interna de datos oficiales de ESPN
     const urlTarget = `https://site.api.espn.com/apis/site/v2/sports/soccer/all/summary?event=${juegoId}&lang=es&region=ar`;
 
     const response = await fetch(urlTarget, {
@@ -23,32 +23,51 @@ export async function GET(request: Request) {
 
     const data = await response.json();
 
-    // 1. EXTRAER ALINEACIONES TITULARES
+    // 1. EXTRAER JUGADORES Y FORMACIÓN TÁCTICA
     const titularesLocal: string[] = [];
     const titularesVisitante: string[] = [];
+    
+    // Variables de respaldo por si el feed de rosters no trae la formación explícita
+    let formacionLocal = "N/A";
+    let formacionVisitante = "N/A";
 
-    // Buscamos dentro de la estructura de rosters de la API de ESPN
     const rosters = data?.rosters || [];
     
-    // El primer equipo del array suele ser el Local y el segundo el Visitante
-    if (rosters[0]?.roster) {
-      // Filtramos únicamente a los que iniciaron el partido (titulares)
-      rosters[0].roster.forEach((player: any) => {
-        if (player.starter && titularesLocal.length < 11) {
-          titularesLocal.push(player.athlete?.displayName || player.athlete?.shortName);
-        }
-      });
+    // --- Equipo Local ---
+    if (rosters[0]) {
+      // Extraemos la formación táctica (ej: "4-4-2") desde el objeto del equipo si está disponible
+      formacionLocal = rosters[0].formation || "N/A";
+      
+      if (rosters[0].roster) {
+        rosters[0].roster.forEach((player: any) => {
+          if (player.starter && titularesLocal.length < 11) {
+            titularesLocal.push(player.athlete?.displayName || player.athlete?.shortName);
+          }
+        });
+      }
     }
 
-    if (rosters[1]?.roster) {
-      rosters[1].roster.forEach((player: any) => {
-        if (player.starter && titularesVisitante.length < 11) {
-          titularesVisitante.push(player.athlete?.displayName || player.athlete?.shortName);
-        }
-      });
+    // --- Equipo Visitante ---
+    if (rosters[1]) {
+      formacionVisitante = rosters[1].formation || "N/A";
+      
+      if (rosters[1].roster) {
+        rosters[1].roster.forEach((player: any) => {
+          if (player.starter && titularesVisitante.length < 11) {
+            titularesVisitante.push(player.athlete?.displayName || player.athlete?.shortName);
+          }
+        });
+      }
     }
 
-    // 2. EXTRAER INCIDENCIAS EN VIVO (Goles, Tarjetas, Cambios)
+    // RESPALDO: Si las propiedades internas cambian, buscamos la formación en el árbol boxscore alternativo
+    if (formacionLocal === "N/A" || formacionVisitante === "N/A") {
+      const teamsBoxscore = data?.boxscore?.teams || [];
+      if (teamsBoxscore[0]?.formation) formacionLocal = teamsBoxscore[0].formation;
+      if (teamsBoxscore[1]?.formation) formacionVisitante = teamsBoxscore[1].formation;
+    }
+
+    // 2. EXTRAER INCIDENCIAS EN VIVO
     const incidencias: any[] = [];
     const keyEvents = data?.keyEvents || [];
 
@@ -57,10 +76,8 @@ export async function GET(request: Request) {
       const descripcion = event?.text || "";
       let tipo = "comentario";
 
-      // Clasificamos según el ID de tipo de evento que maneja la API de ESPN
       const typeId = event?.type?.id;
-      
-      if (typeId === "1" || typeId === "10") { // IDs típicos de goles
+      if (typeId === "1" || typeId === "10") {
         tipo = "gol";
       } else if (typeId === "2") {
         tipo = "tarjeta-amarilla";
@@ -71,31 +88,27 @@ export async function GET(request: Request) {
       }
 
       if (descripcion) {
-        incidencias.push({
-          tiempo,
-          descripcion,
-          tipo
-        });
+        incidencias.push({ tiempo, descripcion, tipo });
       }
     });
 
-    // 3. RETORNO DE LOS DATOS TOTALMENTE LIMPIOS
+    // 3. RETORNO DE DATOS TOTALMENTE COMPLETOS
     return NextResponse.json({
       juegoId,
       success: true,
-      apiFeedSource: "ESPN-Internal-API",
+      formaciones: {
+        local: formacionLocal,       
+        visitante: formacionVisitante 
+      },
       titulares: {
-        local: titularesLocal.length > 0 ? titularesLocal : ["Alineación titular no cargada en el feed"],
-        visitante: titularesVisitante.length > 0 ? titularesVisitante : ["Alineación titular no cargada en el feed"]
+        local: titularesLocal.length > 0 ? titularesLocal : ["Alineación no disponible"],
+        visitante: titularesVisitante.length > 0 ? titularesVisitante : ["Alineación no disponible"]
       },
       eventosEnVivo: incidencias
     });
 
   } catch (error: any) {
     console.error("[API-Scraper Error]:", error.message);
-    return NextResponse.json({ 
-      error: "Error interno al procesar el feed de datos",
-      details: error.message 
-    }, { status: 500 });
+    return NextResponse.json({ error: "Error interno", details: error.message }, { status: 500 });
   }
 }
