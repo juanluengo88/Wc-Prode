@@ -73,9 +73,12 @@ export async function fetchTeamData(
 			squad: teamDataJson.squad,
 		};
 	} catch (error) {
-		if (teamData && teamData.status === 404) {
+		if (teamData && teamData.status === 429) {
 			console.warn(`Hammering API too much, waiting before retrying...`);
 			return parseInt(teamData.headers.get("X-RequestCounter-Reset") || "0");
+		} else {
+			console.error(`Error fetching team ${teamId}:`, error);
+			throw error;
 		}
 	}
 	return teamDataJson;

@@ -35,7 +35,7 @@ const processTeam = async (
 			teamData = _teamData;
 		} else {
 			console.log(`Waiting for ${_teamData} seconds before retrying...`);
-			await sleep(_teamData);
+			await sleep(_teamData * 1000);
 		}
 	}
 	return teamData;
