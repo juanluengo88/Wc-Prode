@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import type { Match, Prediction, User } from "@/lib/mockData";
+import { Team } from "@/lib/footballDataApi";
 
 export function useProdeApp() {
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -18,21 +19,25 @@ export function useProdeApp() {
 	const [matches, setMatches] = useState<Match[]>([]);
 	const [predictions, setPredictions] = useState<Prediction[]>([]);
 	const [users, setUsers] = useState<User[]>([]);
+	const [teams, setTeams] = useState<Team[]>([]);
 
 	const fetchAppData = useCallback(async (uid: string) => {
-		const [matchesRes, predictionsRes, usersRes] = await Promise.all([
+		const [matchesRes, predictionsRes, usersRes, teamsRes] = await Promise.all([
 			fetch("/api/matches"),
 			fetch(`/api/predictions?uid=${uid}`),
 			fetch("/api/users"),
+			fetch("/api/teams"),
 		]);
-		const [matchesData, predictionsData, usersData] = await Promise.all([
+		const [matchesData, predictionsData, usersData, teams] = await Promise.all([
 			matchesRes.json(),
 			predictionsRes.json(),
 			usersRes.json(),
+			teamsRes.json(),
 		]);
 		setMatches(matchesData);
 		setPredictions(predictionsData);
 		setUsers(usersData);
+		setTeams(teams);
 	}, []);
 
 	// Listen for Firebase Auth state changes
@@ -133,6 +138,7 @@ export function useProdeApp() {
 		matches,
 		predictions,
 		users,
+		teams,
 		selectedMatch,
 		userPredictionForSelected,
 		handleLogout,
