@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
-  // ID del partido de tu captura
-  const juegoId = "401864055"; 
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id: juegoId } = await params;
 
-  console.log(`[API-Scraper] Consultando feed para obtener jugadores e incidencias + formación...`);
+  if (!juegoId) {
+    return NextResponse.json({ error: "Falta el parámetro id del juego" }, { status: 400 });
+  }
 
   try {
     // API interna de datos oficiales de ESPN
@@ -23,21 +27,34 @@ export async function GET(request: Request) {
 
     const data = await response.json();
 
-    // 1. EXTRAER JUGADORES Y FORMACIÓN TÁCTICA
+    // 1. EXTRAER INFORMACIÓN DE LOS EQUIPOS (¡NUEVO!)
+    let nombreLocal = "No disponible";
+    let nombreVisitante = "No disponible";
+    let abbrevLocal = "";
+    let abbrevVisitante = "";
+
+    // Buscamos en la sección de equipos del boxscore
+    const teamsBoxscore = data?.boxscore?.teams || data?.teams || [];
+    if (teamsBoxscore[0]?.team) {
+      nombreLocal = teamsBoxscore[0].team.displayName || teamsBoxscore[0].team.name || "Local";
+      abbrevLocal = teamsBoxscore[0].team.abbreviation || "";
+    }
+    if (teamsBoxscore[1]?.team) {
+      nombreVisitante = teamsBoxscore[1].team.displayName || teamsBoxscore[1].team.name || "Visitante";
+      abbrevVisitante = teamsBoxscore[1].team.abbreviation || "";
+    }
+
+    // 2. EXTRAER JUGADORES Y FORMACIÓN TÁCTICA
     const titularesLocal: string[] = [];
     const titularesVisitante: string[] = [];
-    
-    // Variables de respaldo por si el feed de rosters no trae la formación explícita
     let formacionLocal = "N/A";
     let formacionVisitante = "N/A";
 
     const rosters = data?.rosters || [];
     
-    // --- Equipo Local ---
+    // Equipo Local
     if (rosters[0]) {
-      // Extraemos la formación táctica (ej: "4-4-2") desde el objeto del equipo si está disponible
-      formacionLocal = rosters[0].formation || "N/A";
-      
+      formacionLocal = rosters[0].formation || teamsBoxscore[0]?.formation || "N/A";
       if (rosters[0].roster) {
         rosters[0].roster.forEach((player: any) => {
           if (player.starter && titularesLocal.length < 11) {
@@ -47,10 +64,9 @@ export async function GET(request: Request) {
       }
     }
 
-    // --- Equipo Visitante ---
+    // Equipo Visitante
     if (rosters[1]) {
-      formacionVisitante = rosters[1].formation || "N/A";
-      
+      formacionVisitante = rosters[1].formation || teamsBoxscore[1]?.formation || "N/A";
       if (rosters[1].roster) {
         rosters[1].roster.forEach((player: any) => {
           if (player.starter && titularesVisitante.length < 11) {
@@ -60,14 +76,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // RESPALDO: Si las propiedades internas cambian, buscamos la formación en el árbol boxscore alternativo
-    if (formacionLocal === "N/A" || formacionVisitante === "N/A") {
-      const teamsBoxscore = data?.boxscore?.teams || [];
-      if (teamsBoxscore[0]?.formation) formacionLocal = teamsBoxscore[0].formation;
-      if (teamsBoxscore[1]?.formation) formacionVisitante = teamsBoxscore[1].formation;
-    }
-
-    // 2. EXTRAER INCIDENCIAS EN VIVO
+    // 3. EXTRAER INCIDENCIAS EN VIVO
     const incidencias: any[] = [];
     const keyEvents = data?.keyEvents || [];
 
@@ -92,23 +101,33 @@ export async function GET(request: Request) {
       }
     });
 
-    // 3. RETORNO DE DATOS TOTALMENTE COMPLETOS
+    // 4. RESPUESTA JSON ENRIQUECIDA
     return NextResponse.json({
       juegoId,
       success: true,
+      equipos: {
+        local: {
+          nombre: nombreLocal,        // 👈 "México"
+          abreviacion: abbrevLocal    // 👈 "MEX"
+        },
+        visitante: {
+          nombre: nombreVisitante,    // 👈 "Sudáfrica"
+          abreviacion: abbrevVisitante// 👈 "RSA"
+        }
+      },
       formaciones: {
-        local: formacionLocal,       
-        visitante: formacionVisitante 
+        local: formacionLocal,
+        visitante: formacionVisitante
       },
       titulares: {
-        local: titularesLocal.length > 0 ? titularesLocal : ["Alineación no disponible"],
-        visitante: titularesVisitante.length > 0 ? titularesVisitante : ["Alineación no disponible"]
+        local: titularesLocal,
+        visitante: titularesVisitante
       },
       eventosEnVivo: incidencias
     });
 
   } catch (error: any) {
-    console.error("[API-Scraper Error]:", error.message);
+    console.error("[Scraper Error]:", error.message);
     return NextResponse.json({ error: "Error interno", details: error.message }, { status: 500 });
   }
 }
