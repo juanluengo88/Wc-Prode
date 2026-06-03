@@ -9,6 +9,7 @@ export interface Match {
 	scoreHome: number | null;
 	scoreAway: number | null;
 	groupOrStage: string;
+	espnMatchId?: string;
 }
 
 export interface Prediction {
