@@ -2,7 +2,7 @@ import { db } from "@/lib/firebaseAdmin";
 
 // 1. Definimos el Tipo estricto para la Predicción
 export type Prediction = {
-  uid: string;          // ID del documento en Firestore
+  uid: string;         // ID del documento en Firestore
   matchId: string;     // ID del partido oficial
   userId: string;      // ID del usuario que apostó
   predictHome: number; // Goles apostados al local
@@ -13,8 +13,6 @@ export type Prediction = {
 
 /**
  * Recupera todas las predicciones asociadas a un matchId con tipado estricto
- * @param matchId ID del partido
- * @returns Promesa que resuelve en un Array de tipo Prediction
  */
 export async function getPredictionsByMatchId(matchId: string): Promise<Prediction[]> {
   const snapshot = await db
@@ -22,7 +20,6 @@ export async function getPredictionsByMatchId(matchId: string): Promise<Predicti
     .where("matchId", "==", matchId)
     .get();
 
-  // Forzamos el mapeo para que cumpla rigurosamente con la estructura del tipo Prediction
   return snapshot.docs.map((doc) => {
     const data = doc.data();
     return {
@@ -32,7 +29,23 @@ export async function getPredictionsByMatchId(matchId: string): Promise<Predicti
       predictHome: Number(data.predictHome),
       predictAway: Number(data.predictAway),
       pointsEarned: data.pointsEarned !== undefined ? data.pointsEarned : null,
-      ...data // Por si guardas campos extra en la base de datos
+      ...data 
     } as Prediction;
   });
+}
+
+/**
+ * 📝 EDITA O ACTUALIZA UNA PREDICCIÓN EXISTENTE EN LA DB
+ * @param uid ID del documento de la predicción en Firestore (p.uid)
+ * @param data Campos parciales que deseas modificar (ej: { predictHome: 2, predictAway: 1 })
+ */
+export async function updatePrediction(uid: string, data: Partial<Omit<Prediction, 'uid'>>) {
+  if (!uid) {
+    throw new Error("Se requiere el UID de la predicción para poder editarla.");
+  }
+
+  const docRef = db.collection("predictions").doc(uid);
+  
+  // Ejecutamos la actualización selectiva en Firestore
+  await docRef.update(data);
 }

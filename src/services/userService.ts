@@ -5,12 +5,9 @@ export interface UserDoc {
   name?: string;
   email?: string;
   totalPoints?: number;
-  [key: string]: any; // Por si tenés más campos en tu DB
+  [key: string]: any; 
 }
 
-/**
- * Buscar un usuario por su ID único de documento (UID de Firebase)
- */
 export async function getUserById(id: string): Promise<UserDoc> {
   const docRef = db.collection("users").doc(id);
   const docSnap = await docRef.get();
@@ -23,19 +20,11 @@ export async function getUserById(id: string): Promise<UserDoc> {
 }
 
 /**
- * Buscar un usuario por su Email (Útil para logins o buscadores)
+ * Actualiza los campos de un usuario de forma segura
+ * @param id UID del usuario
+ * @param data Objeto con las propiedades a actualizar (ej: { totalPoints: 10 })
  */
-export async function getUserByEmail(email: string): Promise<UserDoc> {
-  const snapshot = await db
-    .collection("users")
-    .where("email", "==", email.trim().toLowerCase())
-    .limit(1)
-    .get();
-
-  if (snapshot.empty) {
-    throw new Error("User not found by email");
-  }
-
-  const doc = snapshot.docs[0];
-  return { id: doc.id, ...doc.data() } as UserDoc;
+export async function updateById(id: string, data: Partial<UserDoc>) {
+  const docRef = db.collection("users").doc(id);
+  await docRef.update(data);
 }
