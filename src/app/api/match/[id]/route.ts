@@ -4,39 +4,28 @@ import { Match } from "@/lib/mockData";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = params;
+  const { id } = await params;
 
- const snapshot = await db
-  .collection("matches")
-  .where("id", "==", id)   
-  .limit(1)
-  .get();
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  }
+  try {
+    const docRef = db.collection("matches").doc(id);
+    const docSnap = await docRef.get();
 
-if (snapshot.empty) {
-  return NextResponse.json({ error: "Match not found" }, { status: 404 });
-}
+    if (!docSnap.exists) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
 
-const data = snapshot.docs[0].data();
+    const data = docSnap.data();
 
-if (!data) {
-  return NextResponse.json({ error: "Match not found" }, { status: 404 });
-}
+    const responseData = { id: docSnap.id, ...data };
 
-const match: Match = {
-  matchId: data.matchId,
-  teamHome: data.teamHome,
-  teamAway: data.teamAway,
-  teamHomeFlag: data.teamHomeFlag,
-  teamAwayFlag: data.teamAwayFlag,
-  dateTime: data.dateTime,
-  status: data.status,
-  scoreHome: data.scoreHome,
-  scoreAway: data.scoreAway,
-  groupOrStage: data.groupOrStage
-};
+    return NextResponse.json(responseData);
+  } catch (error) {
 
-return NextResponse.json(match);
-
+    return NextResponse.json(error);
+  }
 }
