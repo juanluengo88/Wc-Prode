@@ -41,11 +41,28 @@ export default function MatchCard({
     .replace(".", "");
   const formattedTime = dateObj.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
+  // 🔮 DETECTAMOS SI EL USUARIO YA REGISTRÓ UN PRONÓSTICO PARA ESTE ENCUENTRO
+  const tienePrediccionHecha = pred !== undefined && pred !== null;
+
   return (
     <div
       onClick={() => onSelectMatch(match.matchId)}
-      className="group relative flex flex-col justify-between backdrop-blur-md bg-slate-900/50 hover:bg-slate-900/80 p-5 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all duration-300 shadow-md cursor-pointer hover:shadow-lg hover:scale-[1.01]"
+      className={`group relative flex flex-col justify-between backdrop-blur-md p-5 rounded-2xl border transition-all duration-300 shadow-md cursor-pointer hover:shadow-lg hover:scale-[1.01] ${
+        tienePrediccionHecha && match.status === "SCHEDULED"
+          ? "bg-slate-900/70 border-indigo-500/30 hover:border-indigo-500/50" 
+          : "bg-slate-900/50 border-slate-800 hover:border-slate-700"
+      }`}
     >
+      {/* Indicativo visual: Badge absoluto de Pronóstico Registrado */}
+      {tienePrediccionHecha && match.status === "SCHEDULED" && (
+        <div className="absolute -top-2 -right-1 flex items-center gap-1 bg-indigo-600 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-md shadow-indigo-600/20 border border-indigo-400/30 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-2.5 h-2.5">
+            <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
+          </svg>
+          Pronosticado
+        </div>
+      )}
+
       {/* Card Header */}
       <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-2">
         <span className="text-xs font-semibold text-amber-500/85 tracking-wide uppercase">
@@ -65,25 +82,16 @@ export default function MatchCard({
           )}
           {match.status === "SCHEDULED" && tbdTeams && (
             <span className="flex items-center gap-1 bg-slate-700/50 text-slate-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-slate-600/40">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-              </svg>
               Por definir
             </span>
           )}
           {match.status === "SCHEDULED" && !tbdTeams && (
             locked ? (
               <span className="flex items-center gap-1 bg-amber-500/10 text-amber-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-amber-500/20">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                  <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
-                </svg>
                 Cerrado
               </span>
             ) : (
               <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-emerald-500/20 animate-pulse">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                  <path fillRule="evenodd" d="M14.5 9h-4.75V5.5a3.25 3.25 0 1 0-6.5 0v3.75A2.25 2.25 0 0 0 1 11.5v6A2.25 2.25 0 0 0 3.25 19.75h11.5A2.25 2.25 0 0 0 17 17.5v-6A2.25 2.25 0 0 0 14.5 9Zm-8-3.5a1.75 1.75 0 0 1 3.5 0V9h-3.5V5.5Z" clipRule="evenodd" />
-                </svg>
                 Abierto
               </span>
             )
@@ -129,11 +137,23 @@ export default function MatchCard({
               </span>
             </div>
           ) : readonly ? (
-            <div className="flex items-center gap-3">
-              <span className="text-xl font-extrabold px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-500">-</span>
-              <span className="text-slate-500 font-bold text-sm">:</span>
-              <span className="text-xl font-extrabold px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-500">-</span>
-            </div>
+            /* SI ESTÁ EN FIXTURE VIEW Y TIENE PREDICCIÓN, LA MUESTRA EN LUGAR DE " - : - " */
+            tienePrediccionHecha ? (
+              <div className="flex flex-col items-center gap-1">
+                <div className="flex items-center gap-2 bg-indigo-950/40 px-3 py-1 rounded-xl border border-indigo-500/20 shadow-inner">
+                  <span className="text-sm font-black text-indigo-300">{pred.predictHome}</span>
+                  <span className="text-indigo-500/60 text-xs font-bold">:</span>
+                  <span className="text-sm font-black text-indigo-300">{pred.predictAway}</span>
+                </div>
+                <span className="text-[8px] text-indigo-400/80 font-semibold uppercase tracking-wider">Tu apuesta</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-xl font-extrabold px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-500">-</span>
+                <span className="text-slate-500 font-bold text-sm">:</span>
+                <span className="text-xl font-extrabold px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-500">-</span>
+              </div>
+            )
           ) : (
             <div className="flex items-center gap-1.5">
               <input
@@ -141,9 +161,12 @@ export default function MatchCard({
                 maxLength={2}
                 value={homeVal}
                 disabled={locked}
-                placeholder="-"
+                // Si ya hay predicción, la colocamos como placeholder indicativo en gris claro
+                placeholder={tienePrediccionHecha ? pred.predictHome.toString() : "-"}
                 onChange={(e) => onInputChange?.(match.matchId, "home", e.target.value)}
-                className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800 text-center font-bold text-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-950/70"
+                className={`w-10 h-10 rounded-xl bg-slate-950 border text-center font-bold text-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  tienePrediccionHecha && !homeVal ? "border-indigo-500/30 text-indigo-300 placeholder-indigo-300/60" : "border-slate-800 text-white"
+                }`}
               />
               <span className="text-slate-600 font-bold">-</span>
               <input
@@ -151,9 +174,11 @@ export default function MatchCard({
                 maxLength={2}
                 value={awayVal}
                 disabled={locked}
-                placeholder="-"
+                placeholder={tienePrediccionHecha ? pred.predictAway.toString() : "-"}
                 onChange={(e) => onInputChange?.(match.matchId, "away", e.target.value)}
-                className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800 text-center font-bold text-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-slate-950/70"
+                className={`w-10 h-10 rounded-xl bg-slate-950 border text-center font-bold text-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed ${
+                  tienePrediccionHecha && !awayVal ? "border-indigo-500/30 text-indigo-300 placeholder-indigo-300/60" : "border-slate-800 text-white"
+                }`}
               />
             </div>
           )}
@@ -203,8 +228,8 @@ export default function MatchCard({
               </span>
             )}
             {match.status === "SCHEDULED" && !tbdTeams && (
-              <span className="text-[10px] text-slate-500 font-semibold uppercase">
-                Sin iniciar
+              <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider bg-indigo-500/5 px-2 py-0.5 rounded border border-indigo-500/10">
+                {tienePrediccionHecha ? "Modificar" : "Sin iniciar"}
               </span>
             )}
           </>
@@ -254,7 +279,7 @@ export default function MatchCard({
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                     <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
                   </svg>
-                ) : pred ? "Actualizar" : "Guardar"}
+                ) : tienePrediccionHecha ? "Actualizar" : "Guardar"}
               </button>
             ) : pred ? (
               <span className="text-[10px] text-slate-400 bg-slate-800/40 px-2 py-0.5 rounded border border-slate-700/30">
