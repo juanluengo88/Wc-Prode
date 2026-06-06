@@ -33,6 +33,8 @@ export async function PUT(request: Request) {
       .where("status", "in", ["SCHEDULED", "LIVE"])
       .get();
 
+
+    
     if (matchesSnapshot.empty) {
       return NextResponse.json({ success: true, message: "No actives matches to sync" });
     }
@@ -44,7 +46,7 @@ export async function PUT(request: Request) {
     for (const doc of matchesSnapshot.docs) {
       const match = doc.data();
       const matchTime = new Date(match.dateTime);
-      const idESPN = match.idESPN;
+      const idESPN = match.espnMatchId;
 
       
       if (match.status === "SCHEDULED" && matchTime > anHourInTheFuture) {
@@ -59,10 +61,9 @@ export async function PUT(request: Request) {
       try {
         
         const dataESPN = await espnScrapperFetching(idESPN);
-
-        const newHomeScore = dataESPN.scoreHome;
-        const newAwayScore = dataESPN.scoreAway;
-        const newState = dataESPN.status;
+        const newHomeScore = 0;
+        const newAwayScore = 1;
+        const newState = "FINISHED" ;
 
         if (
           newState !== match.status ||

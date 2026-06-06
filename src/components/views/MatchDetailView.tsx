@@ -38,6 +38,7 @@ export default function MatchDetailView({
     const [showSuccess, setShowSuccess] = useState(false);
     const [timeLeftStr, setTimeLeftStr] = useState("");
     const [isLocked, setIsLocked] = useState(false);
+    const [lastDiff, setLastDiff] = useState(0);
     const getTime = useServerTime();
 
     const { data: espn } = useMatchDetails(match.espnMatchId || match.matchId);
@@ -58,8 +59,15 @@ export default function MatchDetailView({
             if (diff <= 15 * 60 * 1000 || match.status !== "SCHEDULED") {
                 setIsLocked(true);
                 setTimeLeftStr("PRONÓSTICOS CERRADOS");
+                if(match.status === "LIVE" && lastDiff > 5*60 ){
+                    router.refresh()
+                    setLastDiff(0)
+                    return
+                }
+                setLastDiff((-1)*diff)
                 return;
             }
+
 
             setIsLocked(false);
 
