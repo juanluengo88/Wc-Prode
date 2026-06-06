@@ -6,6 +6,7 @@ import MotivanationalBanner from "../banners/MotivationalBanner";
 import MatchCard from "@/components/MatchCard/MatchCard";
 import FixtureNavBar from "@/components/navigation/FixtureNavBar";
 import { useFixtureView } from "@/hooks/useFixtureView";
+import { useRouter, useSearchParams } from "next/navigation"; // 👈 IMPORTAMOS LOS HOOKS DE NAVEGACIÓN
 
 interface FixtureViewProps {
   user: User;
@@ -20,6 +21,9 @@ export default function FixtureView({
   predictions,
   onSelectMatch,
 }: FixtureViewProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const {
     filteredMatches,
     setFilteredMatches,
@@ -29,13 +33,26 @@ export default function FixtureView({
     teamsAreDefined
   } = useFixtureView({ matches, predictions });
 
-  
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  // 🕒 LEEMOS LA PÁGINA INICIAL DE LA URL (?page=X). Si no existe, por defecto es 1.
+  const queryPage = searchParams.get("page");
+  const initialPage = queryPage ? parseInt(queryPage, 10) : 1;
+
+  const [currentPage, setCurrentPage] = useState<number>(initialPage);
   const matchesPerPage = 20;
 
-  
+  // Sincronizar el estado local si la URL cambia externamente (ej: botón atrás del navegador)
   useEffect(() => {
-    setCurrentPage(1);
+    if (queryPage) {
+      setCurrentPage(parseInt(queryPage, 10));
+    }
+  }, [queryPage]);
+
+  // Si los filtros cambian la cantidad de partidos, reiniciamos la paginación de forma segura en la URL
+  useEffect(() => {
+    const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
+    if (currentPage > totalPages && totalPages > 0) {
+      handlePageChange(totalPages);
+    }
   }, [filteredMatches.length]);
 
   // Cálculos de índices matemáticos para rebanar el array
@@ -46,8 +63,13 @@ export default function FixtureView({
   // Total de páginas redondeado hacia arriba
   const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
 
+  // 🚀 FUNCIÓN CAMBIAR PÁGINA: Actualiza el estado y lo inyecta en la URL de Next.js
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
+    
+    // Modificamos la URL sin recargar la página para que quede guardada en el historial
+    router.push(`?page=${pageNumber}`, { scroll: false });
+
     // Scroll suave hacia arriba para que el usuario vea el inicio de la nueva página
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -107,7 +129,7 @@ export default function FixtureView({
               })}
             </div>
 
-            {/* CONTROLES DE PAGINACIÓN INTERACTIVA DE TU PRODE (Solo si hay más de 1 página) */}
+            {/* CONTROLES DE PAGINACIÓN INTERACTIVA DE TU PRODE */}
             {totalPages > 1 && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-900 text-xs text-slate-400">
                 <span>

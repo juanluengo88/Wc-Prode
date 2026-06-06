@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useProde } from "../../context/ProdeContext";
 import TopNavbar from "../../components/navigation/TopNavbar";
@@ -31,6 +31,7 @@ export default function FixturePage() {
 		<div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
 			<TopNavbar />
 			<div className="flex-1 flex flex-col">
+				<Suspense>
 				<FixtureView
 					user={currentUser}
 					matches={matches}
@@ -38,6 +39,7 @@ export default function FixturePage() {
 					onSelectMatch={(matchId) => router.push(`/match/${matchId}`)}
 					onLogout={handleLogout}
 				/>
+				</Suspense>
 			</div>
 			<BottomNav />
 		</div>

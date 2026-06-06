@@ -28,7 +28,6 @@ export async function POST(request: NextRequest) {
 		predictAway: number;
 	};
 
-	// Upsert: update existing prediction or create a new one
 	const existing = await db
 		.collection("predictions")
 		.where("uid", "==", uid)
