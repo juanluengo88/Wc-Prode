@@ -65,6 +65,7 @@ export async function PUT(request: Request) {
         const newAwayScore = dataESPN.scoreAway;
         const newState = dataESPN.status;
 
+        
         if (
           newState !== match.status ||
           newHomeScore !== match.scoreHome ||
