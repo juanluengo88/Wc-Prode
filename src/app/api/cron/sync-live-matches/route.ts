@@ -61,9 +61,9 @@ export async function PUT(request: Request) {
       try {
         
         const dataESPN = await espnScrapperFetching(idESPN);
-        const newHomeScore = 0;
-        const newAwayScore = 1;
-        const newState = "FINISHED" ;
+        const newHomeScore = dataESPN.scoreHome;
+        const newAwayScore = dataESPN.scoreAway;
+        const newState = dataESPN.status;
 
         if (
           newState !== match.status ||
