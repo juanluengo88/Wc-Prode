@@ -1,8 +1,8 @@
 import { Match } from "@/lib/mockData";
 import { Prediction } from "@/services/predictionService"; 
+import { db } from "@/lib/firebaseAdmin";
 
 /**
- * Función Matemática Pura: Evalúa una predicción contra el resultado real
  * @returns 
  */
 export function assertPrediction(prediction: Prediction, match: Match): number {

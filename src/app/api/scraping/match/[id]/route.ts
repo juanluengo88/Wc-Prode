@@ -309,7 +309,7 @@ export async function GET(
       success: true,
       juegoIdESPN: juegoId,
       timestampQuery: new Date().toISOString(),
-      partidoDB: {
+      partido: {
         teamHome,
         teamAway,
         scoreHome,

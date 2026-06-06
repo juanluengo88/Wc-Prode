@@ -82,7 +82,6 @@ export default function MatchDetailView({
         return () => clearInterval(timer);
     }, [match]);
 
-    // 🌟 FUNCIÓN PARA REDIRECCIONAR AL EQUIPO USANDO EL ID DE TU PROPIA BASE DE DATOS
     const handleRedirectionToTeam = (teamName: string) => {
         const teamInDB = teams.find((t) => t.name === teamName);
         if (teamInDB?.teamId) {

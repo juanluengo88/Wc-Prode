@@ -17,16 +17,35 @@ export async function POST(
     }
 
     const matchData = await getMatchById(id);
+
+  
+    if ((matchData as any).pointsCalculated === true) {
+      return NextResponse.json({
+        success: false,
+        error: "Blocked Operation",
+        detalles: `The points from the match (${id}) were previusly assigned. They can only be assigned once.`
+      }, { status: 200 });
+    }
+
     const predictions = await getPredictionsByMatchId(id);
 
+    const batch = db.batch();
+    
+    
     if (!predictions || predictions.length === 0) {
+      const matchRef = db.collection("matches").doc(id);
+      await matchRef.update({
+        status: "FINISHED",
+        pointsCalculated: true,
+        pointsCalculatedAt: FieldValue.serverTimestamp()
+      });
+
       return NextResponse.json({
         success: true,
-        message: "No se encontraron predicciones para procesar en este partido.",
+        message: "Partido finalizado. No se encontraron predicciones para procesar.",
       });
     }
 
-   const batch = db.batch();
     let updatedCount = 0;
     
     for (const p of predictions) {
@@ -39,7 +58,6 @@ export async function POST(
         continue; 
       }
 
-      // Si existe, lo añadimos al lote de forma segura
       batch.update(predictionRef, { pointsEarned: pointsEarned }); 
 
       const uidUsuario = p.userId;
@@ -57,13 +75,20 @@ export async function POST(
       updatedCount++;
     }
 
-    if (updatedCount > 0) {
-      await batch.commit();
-    }
+    
+    const matchRef = db.collection("matches").doc(id);
+    batch.update(matchRef, {
+      status: "FINISHED",                       
+      pointsCalculated: true,                   
+      pointsCalculatedAt: FieldValue.serverTimestamp() 
+    });
+
+   
+    await batch.commit();
 
     return NextResponse.json({
       success: true,
-      message: `Puntos calculados y distribuidos con éxito en lote.`,
+      message: `Puntos calculados, distribuidos en lote y partido cerrado exitosamente.`,
       matchId: id,
       processedPredictions: updatedCount,
     });
@@ -74,7 +99,7 @@ export async function POST(
     if (error?.message?.includes("NOT_FOUND")) {
       return NextResponse.json({ 
         error: "Error de consistencia en la base de datos", 
-        detalles: "Uno de los IDs de las predicciones procesadas no existe como documento real en Firestore. Revisa si guardaste el documento con el ID de la predicción o el del usuario." 
+        detalles: "Uno de los IDs de las predicciones procesadas no existe como documento real en Firestore." 
       }, { status: 404 });
     }
 
