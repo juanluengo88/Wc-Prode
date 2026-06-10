@@ -30,5 +30,12 @@ export interface User {
 	rank?: number;
 }
 
+export interface Group {
+	gId: string;
+	name: string;
+	members: string[];
+	inviteCode: string;
+}
+
 export const getFlagUrl = (countryCode: string) =>
 	`https://flagcdn.com/w80/${countryCode.toLowerCase()}.png`;

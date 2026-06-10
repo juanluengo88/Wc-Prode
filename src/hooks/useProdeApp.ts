@@ -10,7 +10,6 @@ export function useProdeApp() {
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
 	const [currentUser, setCurrentUser] = useState<User | null>(null);
 	const [isAuthLoading, setIsAuthLoading] = useState(true);
-
 	const [activeTab, setActiveTab] = useState<
 		"FIXTURE" | "PREDICTIONS" | "LEADERBOARD" | "PROFILE"
 	>("FIXTURE");
