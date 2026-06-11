@@ -58,7 +58,7 @@ export default function GroupCard({ group }: GroupCardProps) {
   const handleCopyLink = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    const inviteLink = `${window.location.origin}/join/${group.id}`;
+    const inviteLink = `${window.location.origin}/invite/group/${group.id}`;
 
     try {
       await navigator.clipboard.writeText(inviteLink);
