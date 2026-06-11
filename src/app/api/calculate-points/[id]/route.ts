@@ -47,29 +47,20 @@ export async function POST(
     }
 
     let updatedCount = 0;
-    
+
     for (const p of predictions) {
       const pointsEarned = assertPrediction(p, matchData);
       const predictionRef = db.collection("predictions").doc(p.uid);
-      const docVerify = await predictionRef.get();
 
-      if (!docVerify.exists) {
-        console.warn(`[Cron Advertencia] El documento con ID ${p.uid} no existe físicamente en Firestore. Saltando...`);
-        continue; 
-      }
-
-      batch.update(predictionRef, { pointsEarned: pointsEarned }); 
+      batch.update(predictionRef, { pointsEarned });
 
       const uidUsuario = p.userId;
 
       if (pointsEarned > 0 && uidUsuario) {
         const userRef = db.collection("users").doc(uidUsuario);
-        const userVerify = await userRef.get();
-        if (userVerify.exists) {
-          batch.update(userRef, {
-            totalPoints: FieldValue.increment(pointsEarned),
-          });
-        }
+        batch.update(userRef, {
+          totalPoints: FieldValue.increment(pointsEarned),
+        });
       }
 
       updatedCount++;

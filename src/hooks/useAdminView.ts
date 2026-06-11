@@ -1,11 +1,11 @@
 "use client";
 
 import { User } from "@/lib/mockData";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export interface AdminUserList {
 	id: string;
-	uid: string; // 🌟 Agregado para soportar tu estructura real de Firebase
+	uid: string;
 	displayName: string;
 	email: string;
 	totalPoints: number;
@@ -28,6 +28,7 @@ export function useAdminConsole({ currentUser }: { currentUser: User | null }) {
 	// Estados Usuarios
 	const [adminUsers, setAdminUsers] = useState<AdminUserList[]>([]);
 	const [loadingAdmin, setLoadingAdmin] = useState(false);
+	const fetchedUsers = useRef(false);
 	const [editingUserId, setEditingUserId] = useState<string | null>(null);
 	const [newPointsVal, setNewPointsVal] = useState("");
 	const [adminSearch, setAdminSearch] = useState("");
@@ -35,6 +36,7 @@ export function useAdminConsole({ currentUser }: { currentUser: User | null }) {
 	// Estados Grupos
 	const [groups, setGroups] = useState<GroupItem[]>([]);
 	const [loadingGroups, setLoadingGroups] = useState(false);
+	const fetchedGroups = useRef(false);
 	const [groupName, setGroupName] = useState("");
 	const [groupDesc, setGroupDesc] = useState("");
 	const [isCreatingGroup, setIsCreatingGroup] = useState(false);
@@ -42,53 +44,43 @@ export function useAdminConsole({ currentUser }: { currentUser: User | null }) {
 
 	useEffect(() => {
 		if (subTab === "users") {
-			fetchUsers();
+			if (fetchedUsers.current) return;
+			fetchedUsers.current = true;
+			setLoadingAdmin(true);
+			fetch("/api/users")
+				.then((res) => (res.ok ? res.json() : null))
+				.then((json) => {
+					if (json) setAdminUsers(json.users || json || []);
+				})
+				.catch((err) => {
+					console.error("Error al cargar usuarios:", err);
+					fetchedUsers.current = false;
+				})
+				.finally(() => setLoadingAdmin(false));
 		} else if (subTab === "groups") {
-			fetchGroups();
+			if (fetchedGroups.current) return;
+			fetchedGroups.current = true;
+			setLoadingGroups(true);
+			fetch("/api/groups")
+				.then((res) => (res.ok ? res.json() : null))
+				.then((json) => {
+					if (json) setGroups(json.groups || []);
+				})
+				.catch((err) => {
+					console.error("Error al cargar grupos:", err);
+					fetchedGroups.current = false;
+				})
+				.finally(() => setLoadingGroups(false));
 		}
 	}, [subTab]);
-
-	const fetchUsers = async () => {
-		setLoadingAdmin(true);
-		try {
-			// 🌟 Unificado a /api/users (plural) para mantener consistencia
-			const res = await fetch("/api/users");
-			if (res.ok) {
-				const json = await res.json();
-				// Si tu API de usuarios devuelve { users: [...] }, usa json.users. Si devuelve el array directo, usa json.
-				const usersArray = json.users || json;
-				setAdminUsers(usersArray || []);
-			}
-		} catch (err) {
-			console.error("Error al cargar usuarios:", err);
-		} finally {
-			setLoadingAdmin(false);
-		}
-	};
-
-	const fetchGroups = async () => {
-		setLoadingGroups(true);
-		try {
-			const res = await fetch("/api/groups");
-			if (res.ok) {
-				const json = await res.json();
-				setGroups(json.groups || []);
-			}
-		} catch (err) {
-			console.error("Error al cargar grupos:", err);
-		} finally {
-			setLoadingGroups(false);
-		}
-	};
 
 	const handleUpdateUserPoints = async (targetUserId: string) => {
 		const pointsNum = parseInt(newPointsVal);
 		if (isNaN(pointsNum)) return;
 
 		try {
-			// 🌟 Corregido a /api/users/ para unificar tus rutas de la API de usuarios
 			const res = await fetch(`/api/users/${targetUserId}`, {
-				method: "POST", // Cambia a PATCH o PUT si tu ruta dinámica usa otro método
+				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ totalPoints: pointsNum }),
 			});
@@ -102,7 +94,6 @@ export function useAdminConsole({ currentUser }: { currentUser: User | null }) {
 					),
 				);
 
-				// 🌟 Sincronizar también el estado de grupos si es que cambias los puntos desde la pestaña de usuarios
 				setGroups((prevGroups) =>
 					prevGroups.map((g) => ({
 						...g,

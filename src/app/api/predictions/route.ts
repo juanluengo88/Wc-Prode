@@ -38,10 +38,11 @@ export async function POST(request: NextRequest) {
 	if (!existing.empty) {
 		const docRef = existing.docs[0].ref;
 		await docRef.update({ predictHome, predictAway });
-		const updated = await docRef.get();
 		return NextResponse.json({
 			predictionId: docRef.id,
-			...updated.data(),
+			...existing.docs[0].data(),
+			predictHome,
+			predictAway,
 		} as Prediction);
 	}
 

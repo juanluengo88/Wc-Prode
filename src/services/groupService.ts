@@ -45,16 +45,7 @@ export async function createGroup(name: string, creatorUid: string) {
 
 	const docRef = await db.collection("groups").add(newGroupData);
 
-	// Get the created document snapshot and return its data
-	const docSnap = await docRef.get();
-
-	if (!docSnap.exists) {
-		throw new Error("Failed to create group.");
-	}
-
-	const createdData = docSnap.data();
-
-	return { id: docSnap.id, ...createdData };
+	return { id: docRef.id, ...newGroupData };
 }
 
 export async function findebyUid(uid: string) {

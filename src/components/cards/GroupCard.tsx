@@ -37,25 +37,14 @@ export default function GroupCard({ group, onDeleteGroup }: GroupCardProps) {
 
 	useEffect(() => {
 		const fetchUsers = async () => {
-			if (
-				isOpen &&
-				group.members &&
-				group.members.length > 0 &&
-				groupUsers.length === 0
-			) {
+			if (isOpen && group.members && group.members.length > 0 && groupUsers.length === 0) {
 				setIsLoadingUsers(true);
 				try {
-					const userPromises = group.members.map(async (id: any) => {
-						const res = await fetch(`/api/users/${id}`);
-						if (res.ok) {
-							return await res.json();
-						}
-						return null;
-					});
-
-					const usersFetched = await Promise.all(userPromises);
-
-					setGroupUsers(usersFetched.filter((u) => u !== null) as UserDoc[]);
+					const res = await fetch(`/api/groups/${group.id}/leaderboard`);
+					if (res.ok) {
+						const json = await res.json();
+						setGroupUsers((json.leaderboard ?? []) as UserDoc[]);
+					}
 				} catch (error) {
 					console.error("Error al cargar los usuarios del grupo:", error);
 				} finally {
@@ -65,7 +54,7 @@ export default function GroupCard({ group, onDeleteGroup }: GroupCardProps) {
 		};
 
 		fetchUsers();
-	}, [isOpen, group.members, groupUsers.length]);
+	}, [isOpen, group.id, group.members, groupUsers.length]);
 
 	useEffect(() => {
 		if (!isAddModalOpen) return;

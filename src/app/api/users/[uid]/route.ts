@@ -33,8 +33,13 @@ export async function PATCH(
 	if (displayName !== undefined) updates.displayName = displayName;
 	if (photoURL !== undefined) updates.photoURL = photoURL;
 
-	await db.collection("users").doc(uid).update(updates);
+	const docRef = db.collection("users").doc(uid);
+	const before = await docRef.get();
 
-	const doc = await db.collection("users").doc(uid).get();
-	return NextResponse.json({ uid, ...(doc.data() as Omit<User, "uid">) });
+	if (!before.exists) {
+		return NextResponse.json({ error: "User not found" }, { status: 404 });
+	}
+
+	await docRef.update(updates);
+	return NextResponse.json({ uid, ...(before.data() as Omit<User, "uid">), ...updates });
 }

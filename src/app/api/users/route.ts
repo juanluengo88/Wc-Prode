@@ -27,15 +27,16 @@ export async function POST(request: NextRequest) {
 	const docRef = db.collection("users").doc(uid);
 	const existing = await docRef.get();
 
-	if (!existing.exists) {
-		await docRef.set({
-			displayName,
-			email,
-			photoURL: photoURL ?? null,
-			totalPoints: 0,
-		});
+	if (existing.exists) {
+		return NextResponse.json({ uid, ...(existing.data() as Omit<User, "uid">) });
 	}
 
-	const data = (await docRef.get()).data() as Omit<User, "uid">;
-	return NextResponse.json({ uid, ...data });
+	const newUser = {
+		displayName,
+		email,
+		photoURL: photoURL ?? null,
+		totalPoints: 0,
+	};
+	await docRef.set(newUser);
+	return NextResponse.json({ uid, ...newUser });
 }
