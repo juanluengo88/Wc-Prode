@@ -1,18 +1,17 @@
 // app/api/groups/user/[uid]/route.ts
 import { NextResponse } from "next/server";
-
-import { findebyUid } from "@/services/groupService";
+import { getLeaderboardByGroupId } from "@/services/groupService";
 
 export async function GET(
 	request: Request,
-	{ params }: { params: Promise<{ uid: string }> },
+	{ params }: { params: Promise<{ id: string }> },
 ) {
 	try {
-		const { uid } = await params;
+		const { id } = await params;
 
-		const groups = await findebyUid(uid);
+		const leaderboard = await getLeaderboardByGroupId(id);
 
-		return NextResponse.json({ success: true, groups });
+		return NextResponse.json({ success: true, leaderboard });
 	} catch (error: any) {
 		console.error("[API User Groups Error]:", error?.message);
 		return NextResponse.json(
