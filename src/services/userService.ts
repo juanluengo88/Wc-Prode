@@ -5,7 +5,28 @@ export interface UserDoc {
   name?: string;
   email?: string;
   totalPoints?: number;
-  [key: string]: any; 
+  [key: string]: any;
+}
+
+export async function getUsers(): Promise<UserDoc[]> {
+  // Lo ideal es traerlos ordenados por puntos descendente para el rank
+  const snapshot = await db
+      .collection("users")
+      .get();
+  
+  return snapshot.docs.map((doc, index) => {
+    const data = doc.data();
+    return {
+      id: doc.id, // O id según manejes en tu UserDoc
+      uid: doc.id,
+      displayName: data.displayName ?? "Usuario",
+      email: data.email ?? "",
+      totalPoints: Number(data.totalPoints ?? 0),
+      groupId: data.groupId ?? null, // 🌟 Clave para saber a qué grupo pertenecen
+      rank: index + 1,
+      ...data
+    } as UserDoc;
+  });
 }
 
 export async function getUserById(id: string): Promise<UserDoc> {

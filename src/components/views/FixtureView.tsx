@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Match, Prediction, User } from "../../lib/mockData";
 import MotivanationalBanner from "../banners/MotivationalBanner";
-import MatchCard from "@/components/MatchCard/MatchCard";
+import MatchCard from "@/components/cards/MatchCard";
 import FixtureNavBar from "@/components/navigation/FixtureNavBar";
 import { useFixtureView } from "@/hooks/useFixtureView";
 import { useRouter, useSearchParams } from "next/navigation"; // 👈 IMPORTAMOS LOS HOOKS DE NAVEGACIÓN

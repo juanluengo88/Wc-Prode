@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
 import type { User } from "@/lib/mockData";
+import { getUsers } from "@/services/userService";
 
 // GET /api/users — sorted leaderboard
 export async function GET() {
-	const snapshot = await db
-		.collection("users")
-		.orderBy("totalPoints", "desc")
-		.get();
-
-	const users: User[] = snapshot.docs.map((doc, index) => ({
-		uid: doc.id,
-		...(doc.data() as Omit<User, "uid">),
-		rank: index + 1,
-	}));
-
-	return NextResponse.json(users);
+	try{
+		const users =  await getUsers();
+		
+		return NextResponse.json(users);
+	}catch(error){
+		throw new Error('Error while fetching users')
+	}
 }
 
 // POST /api/users — create or update user profile (called on first login / signup)

@@ -28,6 +28,7 @@ export interface User {
 	photoURL?: string;
 	totalPoints: number;
 	rank?: number;
+	admin:boolean;
 }
 
 export interface Group {
