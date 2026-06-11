@@ -34,8 +34,7 @@ export default function AdminPage() {
       <TopNavbar />
       <main className="max-w-xl mx-auto w-full px-4 py-8 space-y-6">
         <AdminConsoleView />
-      </main>
-      <BottomNav></BottomNav>
+      </main> 
     </div>
   );
 }
