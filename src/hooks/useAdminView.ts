@@ -140,8 +140,7 @@ export function useAdminConsole({ currentUser }: { currentUser: User | null }) {
 
 			if (res.ok) {
 				const json = await res.json();
-				const newGroup = { ...json.group, members: [] };
-				setGroups((prev) => [newGroup, ...prev]);
+				setGroups((prev) => [json.group, ...prev]);
 				setGroupName("");
 				setGroupDesc("");
 				setGroupSuccess(true);
