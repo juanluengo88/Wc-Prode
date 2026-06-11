@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/map-espn-ids",
+      "schedule": "0 3 * * *"
+    },
+    {
+        "path":"/api/cron/sync-live-matches",
+        "schedule":"*/5 * * * *"
+    }
+  ]
+}

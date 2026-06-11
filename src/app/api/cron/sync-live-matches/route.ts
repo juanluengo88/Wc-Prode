@@ -16,7 +16,7 @@ async function espnScrapperFetching(idESPN: string) {
   });
 
   if (!response.ok) {
-    throw new Error(`Error  Scraping API (Status ${response.status}) for the EspnId: ${idESPN}`);
+    throw new Error(`Error Scraping API (Status ${response.status}) for the EspnId: ${idESPN}`);
   }
 
   return await response.json();
@@ -25,7 +25,6 @@ async function espnScrapperFetching(idESPN: string) {
 export async function PUT(request: Request) {
   try {
     const now = new Date();
-    
     const anHourInTheFuture = new Date(now.getTime() + 60 * 60 * 1000);
 
     const matchesSnapshot = await db
@@ -33,8 +32,6 @@ export async function PUT(request: Request) {
       .where("status", "in", ["SCHEDULED", "LIVE"])
       .get();
 
-
-    
     if (matchesSnapshot.empty) {
       return NextResponse.json({ success: true, message: "No actives matches to sync" });
     }
@@ -42,13 +39,11 @@ export async function PUT(request: Request) {
     const batch = db.batch();
     let editedMatches = 0;
 
-    
     for (const doc of matchesSnapshot.docs) {
       const match = doc.data();
       const matchTime = new Date(match.dateTime);
       const idESPN = match.espnMatchId;
 
-      
       if (match.status === "SCHEDULED" && matchTime > anHourInTheFuture) {
         continue; 
       }
@@ -59,11 +54,12 @@ export async function PUT(request: Request) {
       }
   
       try {
-        
         const dataESPN = await espnScrapperFetching(idESPN);
-        const newHomeScore = dataESPN.scoreHome;
-        const newAwayScore = dataESPN.scoreAway;
-        const newState = dataESPN.status;
+        
+        //return NextResponse.json(dataESPN)
+        const newHomeScore = dataESPN.partido.scoreHome !== undefined ? Number(dataESPN.partido.scoreHome) : match.scoreHome;
+        const newAwayScore = dataESPN.partido.scoreAway !== undefined ? Number(dataESPN.partido.scoreAway) : match.scoreAway;
+        const newState = dataESPN.partido.status !== undefined ? dataESPN.partido.status : match.status;
 
         
         if (
@@ -74,18 +70,16 @@ export async function PUT(request: Request) {
           const matchRef = db.collection("matches").doc(doc.id);
           
           batch.update(matchRef, {
-            scoreHome: newHomeScore !== undefined ? Number(newHomeScore) : null,
-            scoreAway: newAwayScore !== undefined ? Number(newAwayScore) : null,
-            status: newState,
+            scoreHome: newHomeScore,
+            scoreAway: newAwayScore,
+            status: newState, // 🔥 Ya nunca será undefined
             lastScrapedAt: FieldValue.serverTimestamp()
           });
 
           editedMatches++;
 
           if (newState === "FINISHED") {
-            
-
-            fetch(`${APP_URL}/api/cron/calculate-points/${doc.id}`, { 
+            fetch(`${APP_URL}/api/calculate-points/${doc.id}`, { 
               method: "POST",
               cache: "no-store"
             }).catch(err => console.error(`[Cron Scraper Error] trigger failed ${doc.id}:`, err));
@@ -102,7 +96,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Update completed.  ${editedMatches} matches affected `,
+      message: `Update completed. ${editedMatches} matches affected`,
     });
 
   } catch (error: any) {

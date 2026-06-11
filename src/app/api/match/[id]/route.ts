@@ -1,6 +1,6 @@
 import { db } from "@/lib/firebaseAdmin"; // ajusta el path a tu config
 import { NextResponse } from "next/server";
-import { Match } from "@/lib/mockData";
+
 
 export async function GET(
 	request: Request,

@@ -28,6 +28,14 @@ export interface User {
 	photoURL?: string;
 	totalPoints: number;
 	rank?: number;
+	admin:boolean;
+}
+
+export interface Group {
+	gId: string;
+	name: string;
+	members: string[];
+	inviteCode: string;
 }
 
 export const getFlagUrl = (countryCode: string) =>

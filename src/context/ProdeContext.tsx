@@ -16,6 +16,7 @@ export function ProdeProvider({ children }: { children: React.ReactNode }) {
 
 export function useProde() {
 	const context = useContext(ProdeContext);
+	
 	if (!context) {
 		throw new Error("useProde must be used within a ProdeProvider");
 	}
