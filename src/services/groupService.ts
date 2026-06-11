@@ -117,6 +117,24 @@ export async function addUserToGroup(
 	}
 }
 
+export async function addUsersToGroup(
+	groupId: string,
+	userIds: string[],
+): Promise<void> {
+	if (!userIds.length) return;
+
+	const groupRef = db.collection("groups").doc(groupId);
+	const groupSnap = await groupRef.get();
+
+	if (!groupSnap.exists) {
+		throw new Error("El grupo especificado no existe.");
+	}
+
+	await groupRef.update({
+		members: FieldValue.arrayUnion(...userIds),
+	});
+}
+
 export async function getLeaderboardByGroupId(groupId: string) {
 	const groupSnap = await db.collection("groups").doc(groupId).get();
 
