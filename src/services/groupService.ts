@@ -46,18 +46,22 @@ export async function createGroup(name: string, creatorUid: string) {
 }
 
 export async function findById(uid: string) {
-  const groupsSnapshot = await db.collection("groups").get();
+  const groupsSnapshot = await db.collection("groups").
+  where('members','array-contains',uid).
+  get();
 
   const groups = groupsSnapshot.docs.map((doc) => {
-    const data = doc.data(); //falla
-    if (data.members.includes(uid)) {
+
+    const data = doc.data(); 
       return {
         gId: doc.id,
         name: data.name,
+        members: data.members,
         inviteCode: data.inviteCode,
       };
     }
-  });
+  );
 
   return groups;
 }
+

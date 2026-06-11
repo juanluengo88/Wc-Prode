@@ -10,7 +10,7 @@ export async function GET(
   try {
     const { uid } = await params;
 
-    const groups = findById(uid);
+    const groups = await findById(uid);
 
   
     return NextResponse.json({ success: true, groups });

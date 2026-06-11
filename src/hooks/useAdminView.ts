@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 
 export interface AdminUserList {
     id: string;
+    uid: string; // 🌟 Agregado para soportar tu estructura real de Firebase
     displayName: string;
     email: string;
     totalPoints: number;
     photoURL?: string;
     admin?: boolean;
+    groupId?: string | null;
 }
 
 export interface GroupItem {
@@ -48,10 +50,13 @@ export function useAdminConsole() {
     const fetchUsers = async () => {
         setLoadingAdmin(true);
         try {
+            // 🌟 Unificado a /api/users (plural) para mantener consistencia
             const res = await fetch("/api/users");
             if (res.ok) {
                 const json = await res.json();
-                setAdminUsers(json || []);
+                // Si tu API de usuarios devuelve { users: [...] }, usa json.users. Si devuelve el array directo, usa json.
+                const usersArray = json.users || json;
+                setAdminUsers(usersArray || []);
             }
         } catch (err) {
             console.error("Error al cargar usuarios:", err);
@@ -80,16 +85,26 @@ export function useAdminConsole() {
         if (isNaN(pointsNum)) return;
 
         try {
-            const res = await fetch(`/api/user/${targetUserId}`, {
-                method: "POST",
+            // 🌟 Corregido a /api/users/ para unificar tus rutas de la API de usuarios
+            const res = await fetch(`/api/users/${targetUserId}`, {
+                method: "POST", // Cambia a PATCH o PUT si tu ruta dinámica usa otro método
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ totalPoints: pointsNum })
             });
 
             if (res.ok) {
                 setAdminUsers(prev => 
-                    prev.map(u => u.id === targetUserId ? { ...u, totalPoints: pointsNum } : u)
+                    prev.map(u => (u.id === targetUserId || u.uid === targetUserId) ? { ...u, totalPoints: pointsNum } : u)
                 );
+                
+                // 🌟 Sincronizar también el estado de grupos si es que cambias los puntos desde la pestaña de usuarios
+                setGroups(prevGroups => 
+                    prevGroups.map(g => ({
+                        ...g,
+                        members: g.members?.map(m => (m.id === targetUserId || m.uid === targetUserId) ? { ...m, totalPoints: pointsNum } : m)
+                    }))
+                );
+
                 setEditingUserId(null);
                 setNewPointsVal("");
             }
@@ -112,7 +127,9 @@ export function useAdminConsole() {
 
             if (res.ok) {
                 const json = await res.json();
-                setGroups(prev => [json.group, ...prev]);
+                // Inicializamos members como array vacío para evitar que la nueva tarjeta se rompa
+                const newGroup = { ...json.group, members: [] };
+                setGroups(prev => [newGroup, ...prev]);
                 setGroupName("");
                 setGroupDesc("");
                 setGroupSuccess(true);

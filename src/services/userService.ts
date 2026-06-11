@@ -2,10 +2,13 @@ import { db } from "@/lib/firebaseAdmin";
 
 export interface UserDoc {
   id: string;
-  name?: string;
-  email?: string;
-  totalPoints?: number;
-  [key: string]: any;
+  uid: string;
+  displayName: string;
+  email: string;
+  totalPoints: number;
+  photoURL?: string;
+  admin?: boolean;
+  groupId?: string | null;
 }
 
 export async function getUsers(): Promise<UserDoc[]> {
