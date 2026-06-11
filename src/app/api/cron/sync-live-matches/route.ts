@@ -59,9 +59,9 @@ export async function PUT(request: Request) {
         //return NextResponse.json(dataESPN)
         const newHomeScore = dataESPN.partido.scoreHome !== undefined ? Number(dataESPN.partido.scoreHome) : match.scoreHome;
         const newAwayScore = dataESPN.partido.scoreAway !== undefined ? Number(dataESPN.partido.scoreAway) : match.scoreAway;
-        const newState = dataESPN.status !== undefined ? dataESPN.status : match.status;
+        const newState = dataESPN.partido.status !== undefined ? dataESPN.partido.status : match.status;
 
-
+        
         if (
           newState !== match.status ||
           newHomeScore !== match.scoreHome ||
@@ -79,7 +79,7 @@ export async function PUT(request: Request) {
           editedMatches++;
 
           if (newState === "FINISHED") {
-            fetch(`${APP_URL}/api/cron/calculate-points/${doc.id}`, { 
+            fetch(`${APP_URL}/api/calculate-points/${doc.id}`, { 
               method: "POST",
               cache: "no-store"
             }).catch(err => console.error(`[Cron Scraper Error] trigger failed ${doc.id}:`, err));
