@@ -3,29 +3,28 @@ import { NextResponse } from "next/server";
 import { Match } from "@/lib/mockData";
 
 export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
+	request: Request,
+	{ params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse<{ error: string }> | NextResponse<Match>> {
+	const { id } = await params;
 
-  if (!id) {
-    return NextResponse.json({ error: "Missing id" }, { status: 400 });
-  }
-  try {
-    const docRef = db.collection("matches").doc(id);
-    const docSnap = await docRef.get();
+	if (!id) {
+		return NextResponse.json({ error: "Missing id" }, { status: 400 });
+	}
+	try {
+		const docRef = db.collection("matches").doc(id);
+		const docSnap = await docRef.get();
 
-    if (!docSnap.exists) {
-      return NextResponse.json({ error: "Team not found" }, { status: 404 });
-    }
+		if (!docSnap.exists) {
+			return NextResponse.json({ error: "Team not found" }, { status: 404 });
+		}
 
-    const data = docSnap.data();
+		const data = docSnap.data();
 
-    const responseData = { id: docSnap.id, ...data };
+		const responseData = { id: docSnap.id, ...data };
 
-    return NextResponse.json(responseData);
-  } catch (error) {
-
-    return NextResponse.json(error);
-  }
+		return NextResponse.json(responseData);
+	} catch (error) {
+		return NextResponse.json(error);
+	}
 }
