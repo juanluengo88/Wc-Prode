@@ -1,4 +1,5 @@
 import { db } from "@/lib/firebaseAdmin";
+import { addUserToGroup } from "./groupService";
 
 export interface UserDoc {
   id: string;
@@ -51,4 +52,27 @@ export async function getUserById(id: string): Promise<UserDoc> {
 export async function updateById(id: string, data: Partial<UserDoc>) {
   const docRef = db.collection("users").doc(id);
   await docRef.update(data);
+}
+
+
+/**
+ * Asigna un usuario a un grupo específico.
+ * @param userId - El UID del usuario
+ * @param groupId - El ID del documento del grupo
+ */
+export async function assignUserToGroup(userId: string, groupId: string): Promise<void> {
+  try {
+    const userRef = db.collection("users").doc(userId);
+    const userSnap = await userRef.get();
+
+    if (!userSnap.exists) {
+      throw new Error(`El usuario con ID ${userId} no existe en la base de datos.`);
+    }
+
+    await addUserToGroup(groupId,userId);
+    
+  } catch (error: any) {
+    console.error(`[UserService - assignUserToGroup Error]:`, error.message);
+    throw new Error("No se pudo unir al usuario al grupo.");
+  }
 }

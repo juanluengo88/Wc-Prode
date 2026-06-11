@@ -1,7 +1,7 @@
 // app/api/groups/user/[uid]/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
-import { findById } from "@/services/groupService";
+import { findebyUid } from "@/services/groupService";
 
 export async function GET(
   request: Request,
@@ -10,9 +10,10 @@ export async function GET(
   try {
     const { uid } = await params;
 
-    const groups = await findById(uid);
+    const groups = await findebyUid(uid);
 
-  
+    
+
     return NextResponse.json({ success: true, groups });
   } catch (error: any) {
     console.error("[API User Groups Error]:", error?.message);

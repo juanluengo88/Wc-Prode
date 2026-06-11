@@ -45,23 +45,60 @@ export async function createGroup(name: string, creatorUid: string) {
   return { docRef };
 }
 
-export async function findById(uid: string) {
-  const groupsSnapshot = await db.collection("groups").
-  where('members','array-contains',uid).
-  get();
+export async function findebyUid(uid: string) {
+  const groupsSnapshot = await db
+    .collection("groups")
+    .where("members", "array-contains", uid)
+    .get();
 
   const groups = groupsSnapshot.docs.map((doc) => {
-
-    const data = doc.data(); 
-      return {
-        gId: doc.id,
-        name: data.name,
-        members: data.members,
-        inviteCode: data.inviteCode,
-      };
-    }
-  );
+    const data = doc.data();
+    return {
+      gId: doc.id,
+      name: data.name,
+      members: data.members,
+      inviteCode: data.inviteCode,
+    };
+  });
 
   return groups;
 }
 
+export async function findebyid(groupId: string) {
+  const groupsSnapshot = await db.collection("groups").doc(groupId);
+  const docSnap = await groupsSnapshot.get();
+
+  if (!docSnap.exists) {
+    throw new Error ("group not found" );
+  }
+
+  const data = docSnap.data();
+
+  const responseData = {id: docSnap.id, ...data}
+
+  return responseData;
+}
+
+/**
+ * Agrega el ID de un usuario al array de 'members' de un grupo.
+ * @param groupId - El ID del documento del grupo
+ * @param userId - El UID del usuario que se va a unir
+ */
+export async function addUserToGroup(groupId: string, userId: string): Promise<void> {
+  try {
+    const groupRef = db.collection("groups").doc(groupId);
+    
+    const groupSnap = await groupRef.get();
+    if (!groupSnap.exists) {
+      throw new Error("El grupo especificado no existe.");
+    }
+    
+    await groupRef.update({
+      members: FieldValue.arrayUnion(userId)
+    });
+
+  } catch (error: any) {
+    console.error(`[GroupService - addUserToGroup Error]:`, error.message);
+    throw new Error("No se pudo agregar el usuario al grupo.");
+  }
+}
