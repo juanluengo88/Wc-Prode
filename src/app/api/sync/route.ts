@@ -8,18 +8,7 @@ import {
 } from "@/lib/footballDataApi";
 import type { Match } from "@/lib/mockData";
 
-/**
- * POST /api/sync
- *
- * Fetches all WC matches from football-data.org, updates Firestore, and
- * calculates prediction points for newly-finished matches.
- *
- * Protected by the SYNC_SECRET env var — pass it as the Authorization header:
- *   Authorization: Bearer <SYNC_SECRET>
- *
- * Designed to be called by a cron job (e.g. Vercel Cron) during the tournament.
- * Uses only 1 API request, well within the 10 req/min rate limit.
- */
+
 export async function POST(request: NextRequest) {
 	// ─── Auth check ──────────────────────────────────────────────────────────
 	const secret = process.env.SYNC_SECRET;
