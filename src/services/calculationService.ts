@@ -1,9 +1,18 @@
 import { Match } from "@/lib/mockData";
 import { Prediction } from "@/services/predictionService"; 
-import { db } from "@/lib/firebaseAdmin";
+
 
 /**
- * @returns 
+ * Evaluates a user's prediction against the actual match result and returns a score.
+ *
+ * Scoring rules:
+ * - 3 points: Exact scoreline (home and away goals match perfectly).
+ * - 1 point:  Correct tendency (winner or draw) but wrong scoreline.
+ * - 0 points: Wrong tendency, or missing/invalid data.
+ *
+ * @param prediction - The user's predicted scoreline.
+ * @param match - The match containing the actual final score.
+ * @returns The points awarded: 3 (exact), 1 (correct tendency), or 0 (miss/invalid).
  */
 export function assertPrediction(prediction: Prediction, match: Match): number {
   const realHome = match.scoreHome;
@@ -11,7 +20,14 @@ export function assertPrediction(prediction: Prediction, match: Match): number {
   const predHome = prediction.predictHome;
   const predAway = prediction.predictAway;
 
-  if (realHome === null || realAway === null || isNaN(predHome) || isNaN(predAway)) {
+  if (
+    realHome === null ||
+    realAway === null ||
+    predHome === null ||
+    predAway === null ||
+    !Number.isFinite(predHome) ||
+    !Number.isFinite(predAway)
+  ) {
     return 0;
   }
 
@@ -19,10 +35,11 @@ export function assertPrediction(prediction: Prediction, match: Match): number {
     return 3;
   }
 
-  const tendenciaReal = realHome > realAway ? 1 : realHome < realAway ? 2 : 0;
-  const tendenciaPred = predHome > predAway ? 1 : predHome < predAway ? 2 : 0;
+ 
+  const getTendency = (home: number, away: number): "home" | "away" | "draw" =>
+    home > away ? "home" : home < away ? "away" : "draw";
 
-  if (tendenciaReal === tendenciaPred) {
+  if (getTendency(predHome, predAway) === getTendency(realHome, realAway)) {
     return 1;
   }
 
