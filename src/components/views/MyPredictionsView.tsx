@@ -38,13 +38,28 @@ export default function MyPredictionsView({
 	}[];
 
 	// Filter into active and finished
-	const activePredictions = predictionList.filter(
-		(item) => item.match.status === "SCHEDULED" || item.match.status === "LIVE",
-	);
+	const activePredictions = predictionList
+		.filter(
+			(item) =>
+				item.match.status === "SCHEDULED" || item.match.status === "LIVE",
+		)
+		.sort((a, b) => {
+			if (!a.match || !b.match) return 0;
+			return (
+				new Date(a.match.dateTime).getTime() -
+				new Date(b.match.dateTime).getTime()
+			);
+		}); // Sort active predictions by match date, soonest first.
 
-	const finishedPredictions = predictionList.filter(
-		(item) => item.match.status === "FINISHED",
-	);
+	const finishedPredictions = predictionList
+		.filter((item) => item.match.status === "FINISHED")
+		.sort((a, b) => {
+			if (!a.match || !b.match) return 0;
+			return (
+				new Date(b.match.dateTime).getTime() -
+				new Date(a.match.dateTime).getTime()
+			);
+		}); // Sort predictions by match date, most recent first.
 
 	// Helper to format remaining time
 	const getRemainingTimeStr = (matchDateTimeStr: string) => {
@@ -243,7 +258,7 @@ export default function MyPredictionsView({
 											>
 												{prediction.pointsEarned === 3 && "Exacto +3 pts"}
 												{prediction.pointsEarned === 1 && "Ganador +1 pt"}
-												{prediction.pointsEarned === 0 && "0 pts"}
+												{prediction.pointsEarned === 0 && "Incorrecto 0 pts"}
 											</div>
 										) : match.status === "LIVE" ? (
 											<span className="flex items-center gap-1 bg-red-500/10 text-red-400 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-red-500/20">
