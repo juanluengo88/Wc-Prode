@@ -1,6 +1,8 @@
 "use client";
 import React from "react";
 import { Match, Prediction } from "@/lib/mockData";
+import { useLanguage } from "@/context/LanguageContext";
+import { localizeGroupOrStage } from "@/lib/translations";
 
 interface MatchCardProps {
   match: Match;
@@ -35,13 +37,14 @@ export default function MatchCard({
   onSave,
   getPointsBadgeColor,
 }: MatchCardProps) {
+  const { t, lang } = useLanguage();
+
   const dateObj = new Date(match.dateTime);
   const formattedDate = dateObj
     .toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })
     .replace(".", "");
   const formattedTime = dateObj.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 
-  // 🔮 DETECTAMOS SI EL USUARIO YA REGISTRÓ UN PRONÓSTICO PARA ESTE ENCUENTRO
   const tienePrediccionHecha = pred !== undefined && pred !== null;
 
   return (
@@ -49,50 +52,50 @@ export default function MatchCard({
       onClick={() => onSelectMatch(match.matchId)}
       className={`group relative flex flex-col justify-between backdrop-blur-md p-5 rounded-2xl border transition-all duration-300 shadow-md cursor-pointer hover:shadow-lg hover:scale-[1.01] ${
         tienePrediccionHecha && match.status === "SCHEDULED"
-          ? "bg-slate-900/70 border-indigo-500/30 hover:border-indigo-500/50" 
+          ? "bg-slate-900/70 border-indigo-500/30 hover:border-indigo-500/50"
           : "bg-slate-900/50 border-slate-800 hover:border-slate-700"
       }`}
     >
-      {/* Indicativo visual: Badge absoluto de Pronóstico Registrado */}
+      {/* Predicted badge */}
       {tienePrediccionHecha && match.status === "SCHEDULED" && (
         <div className="absolute -top-2 -right-1 flex items-center gap-1 bg-indigo-600 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md shadow-md shadow-indigo-600/20 border border-indigo-400/30 text-white">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-2.5 h-2.5">
             <path fillRule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clipRule="evenodd" />
           </svg>
-          Pronosticado
+          {t("card_predicted")}
         </div>
       )}
 
       {/* Card Header */}
       <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-2">
         <span className="text-xs font-semibold text-amber-500/85 tracking-wide uppercase">
-          {match.groupOrStage}
+          {localizeGroupOrStage(match.groupOrStage, lang)}
         </span>
         <div className="flex items-center gap-1.5">
           {match.status === "LIVE" && (
             <span className="flex items-center gap-1 bg-red-500/15 text-red-400 text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-red-500/35">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              En Vivo
+              {t("card_live")}
             </span>
           )}
           {match.status === "FINISHED" && (
             <span className="bg-slate-800 text-slate-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-slate-700/50">
-              Finalizado
+              {t("card_finished")}
             </span>
           )}
           {match.status === "SCHEDULED" && tbdTeams && (
             <span className="flex items-center gap-1 bg-slate-700/50 text-slate-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-slate-600/40">
-              Por definir
+              {t("card_tbd")}
             </span>
           )}
           {match.status === "SCHEDULED" && !tbdTeams && (
             locked ? (
               <span className="flex items-center gap-1 bg-amber-500/10 text-amber-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-amber-500/20">
-                Cerrado
+                {t("card_closed")}
               </span>
             ) : (
               <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-emerald-500/20 animate-pulse">
-                Abierto
+                {t("card_open")}
               </span>
             )
           )}
@@ -101,7 +104,7 @@ export default function MatchCard({
 
       {/* Teams and Scores */}
       <div className="flex items-center justify-between gap-4 py-2">
-        {/* Team Home */}
+        {/* Home */}
         <div className="flex-1 flex flex-col items-center text-center gap-2">
           {tbdTeams ? (
             <div className="w-12 h-8 rounded-md bg-slate-800/60 border border-slate-700/40 flex items-center justify-center">
@@ -116,7 +119,7 @@ export default function MatchCard({
             />
           )}
           <span className={`text-xs sm:text-sm font-semibold truncate max-w-[100px] sm:max-w-none ${tbdTeams ? "text-slate-500 italic" : ""}`}>
-            {tbdTeams ? "Por definir" : match.teamHome}
+            {tbdTeams ? t("card_tbd") : match.teamHome}
           </span>
         </div>
 
@@ -124,7 +127,7 @@ export default function MatchCard({
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           {tbdTeams ? (
             <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide text-center leading-tight px-1">
-              Equipos<br />pendientes
+              {t("card_teamsPending")}
             </span>
           ) : match.status === "FINISHED" || match.status === "LIVE" ? (
             <div className="flex items-center gap-3">
@@ -137,7 +140,6 @@ export default function MatchCard({
               </span>
             </div>
           ) : readonly ? (
-            /* SI ESTÁ EN FIXTURE VIEW Y TIENE PREDICCIÓN, LA MUESTRA EN LUGAR DE " - : - " */
             tienePrediccionHecha ? (
               <div className="flex flex-col items-center gap-1">
                 <div className="flex items-center gap-2 bg-indigo-950/40 px-3 py-1 rounded-xl border border-indigo-500/20 shadow-inner">
@@ -145,7 +147,7 @@ export default function MatchCard({
                   <span className="text-indigo-500/60 text-xs font-bold">:</span>
                   <span className="text-sm font-black text-indigo-300">{pred.predictAway}</span>
                 </div>
-                <span className="text-[8px] text-indigo-400/80 font-semibold uppercase tracking-wider">Tu apuesta</span>
+                <span className="text-[8px] text-indigo-400/80 font-semibold uppercase tracking-wider">{t("card_yourBet")}</span>
               </div>
             ) : (
               <div className="flex items-center gap-3">
@@ -161,7 +163,6 @@ export default function MatchCard({
                 maxLength={2}
                 value={homeVal}
                 disabled={locked}
-                // Si ya hay predicción, la colocamos como placeholder indicativo en gris claro
                 placeholder={tienePrediccionHecha ? pred.predictHome.toString() : "-"}
                 onChange={(e) => onInputChange?.(match.matchId, "home", e.target.value)}
                 className={`w-10 h-10 rounded-xl bg-slate-950 border text-center font-bold text-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 disabled:opacity-40 disabled:cursor-not-allowed ${
@@ -184,7 +185,7 @@ export default function MatchCard({
           )}
         </div>
 
-        {/* Team Away */}
+        {/* Away */}
         <div className="flex-1 flex flex-col items-center text-center gap-2">
           {tbdTeams ? (
             <div className="w-12 h-8 rounded-md bg-slate-800/60 border border-slate-700/40 flex items-center justify-center">
@@ -199,7 +200,7 @@ export default function MatchCard({
             />
           )}
           <span className={`text-xs sm:text-sm font-semibold truncate max-w-[100px] sm:max-w-none ${tbdTeams ? "text-slate-500 italic" : ""}`}>
-            {tbdTeams ? "Por definir" : match.teamAway}
+            {tbdTeams ? t("card_tbd") : match.teamAway}
           </span>
         </div>
       </div>
@@ -214,22 +215,22 @@ export default function MatchCard({
           <>
             {match.status === "LIVE" && (
               <span className="text-[10px] text-red-400 font-semibold uppercase animate-pulse">
-                En curso
+                {t("card_inProgress")}
               </span>
             )}
             {match.status === "FINISHED" && (
               <span className="text-[10px] text-slate-500 font-semibold uppercase">
-                Finalizado
+                {t("card_finished")}
               </span>
             )}
             {match.status === "SCHEDULED" && tbdTeams && (
               <span className="text-[10px] text-slate-500 italic font-semibold">
-                Equipos por confirmar
+                {t("card_teamsPendingConfirm")}
               </span>
             )}
             {match.status === "SCHEDULED" && !tbdTeams && (
               <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider bg-indigo-500/5 px-2 py-0.5 rounded border border-indigo-500/10">
-                {tienePrediccionHecha ? "Modificar" : "Sin iniciar"}
+                {tienePrediccionHecha ? t("card_modify") : t("card_notStarted")}
               </span>
             )}
           </>
@@ -237,17 +238,17 @@ export default function MatchCard({
           <div onClick={(e) => e.stopPropagation()}>
             {tbdTeams ? (
               <span className="text-[10px] text-slate-500 italic font-semibold">
-                Equipos por confirmar
+                {t("card_teamsPendingConfirm")}
               </span>
             ) : match.status === "FINISHED" ? (
               pred && pred.pointsEarned !== null ? (
                 <div className={`px-2.5 py-1 rounded-full text-xs font-extrabold ${getPointsBadgeColor?.(pred.pointsEarned)}`}>
-                  {pred.pointsEarned === 3 && "Exacto +3 pts"}
-                  {pred.pointsEarned === 1 && "Ganador +1 pt"}
-                  {pred.pointsEarned === 0 && "0 pts"}
+                  {pred.pointsEarned === 3 && t("card_exact")}
+                  {pred.pointsEarned === 1 && t("card_partial")}
+                  {pred.pointsEarned === 0 && t("card_wrong")}
                 </div>
               ) : (
-                <span className="text-[10px] text-slate-500 uppercase font-semibold">Sin pronóstico</span>
+                <span className="text-[10px] text-slate-500 uppercase font-semibold">{t("card_noPrediction")}</span>
               )
             ) : match.status === "LIVE" ? (
               pred ? (
@@ -255,7 +256,7 @@ export default function MatchCard({
                   Pronóstico: {pred.predictHome}-{pred.predictAway}
                 </span>
               ) : (
-                <span className="text-[10px] text-red-400">Sin pronóstico</span>
+                <span className="text-[10px] text-red-400">{t("card_noPrediction")}</span>
               )
             ) : !locked ? (
               <button
@@ -279,14 +280,14 @@ export default function MatchCard({
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
                     <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
                   </svg>
-                ) : tienePrediccionHecha ? "Actualizar" : "Guardar"}
+                ) : tienePrediccionHecha ? t("card_btnUpdate") : t("card_btnSave")}
               </button>
             ) : pred ? (
               <span className="text-[10px] text-slate-400 bg-slate-800/40 px-2 py-0.5 rounded border border-slate-700/30">
                 Pronóstico: {pred.predictHome}-{pred.predictAway}
               </span>
             ) : (
-              <span className="text-[10px] text-slate-500 uppercase font-semibold">Cerrado sin apuesta</span>
+              <span className="text-[10px] text-slate-500 uppercase font-semibold">{t("card_closedNoPrediction")}</span>
             )}
           </div>
         )}

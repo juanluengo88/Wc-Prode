@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { User } from "../../lib/mockData";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface ProfileViewProps {
 	user: User;
@@ -20,24 +21,20 @@ export default function ProfileView({
 	const [showSuccess, setShowSuccess] = useState(false);
 	const [errorMessage, setErrorMessage] = useState("");
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const { t } = useLanguage();
 
-	// Handle local image file loading (convert to base64 Data URL)
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setErrorMessage("");
 		const file = e.target.files?.[0];
 		if (!file) return;
 
-		// Validate file type
 		if (!file.type.startsWith("image/")) {
-			setErrorMessage("Por favor, selecciona únicamente archivos de imagen.");
+			setErrorMessage(t("profile_errInvalidFile"));
 			return;
 		}
 
-		// Validate size (limit to 2MB for browser base64 storage efficiency)
 		if (file.size > 2 * 1024 * 1024) {
-			setErrorMessage(
-				"La imagen es demasiado grande. El límite recomendado es de 2MB.",
-			);
+			setErrorMessage(t("profile_errFileTooLarge"));
 			return;
 		}
 
@@ -75,32 +72,29 @@ export default function ProfileView({
 			<header className="sticky top-0 z-40 backdrop-blur-md bg-slate-900/80 border-b border-slate-880 px-4 py-4 sm:px-8">
 				<div className="max-w-xl mx-auto flex items-center justify-between">
 					<div>
-						<h2 className="text-lg font-extrabold text-white">Mi Perfil</h2>
-						<p className="text-xs text-slate-400">
-							Edita tus datos de participante
-						</p>
+						<h2 className="text-lg font-extrabold text-white">{t("profile_title")}</h2>
+						<p className="text-xs text-slate-400">{t("profile_subtitle")}</p>
 					</div>
 					<button
 						onClick={onLogout}
 						className="text-xs text-red-400 hover:text-red-300 font-bold bg-red-500/10 border border-red-500/25 py-1.5 px-3 rounded-xl transition-colors"
 					>
-						Cerrar Sesión
+						{t("profile_btnLogout")}
 					</button>
 				</div>
 			</header>
 
-			{/* Profile settings card */}
 			<main className="max-w-xl mx-auto px-4 py-8 space-y-6">
-				{/* Statistics & Rank Card */}
+				{/* Stats Card */}
 				<div className="relative overflow-hidden p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-850 flex items-center justify-between gap-4">
 					<div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-amber-500/5 blur-[50px] pointer-events-none" />
 
 					<div className="space-y-1">
 						<span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">
-							Resumen Competitivo
+							{t("profile_competitiveSummary")}
 						</span>
 						<span className="text-slate-200 block text-sm font-semibold truncate max-w-[180px] sm:max-w-none">
-							{displayName || "Usuario"}
+							{displayName || t("profile_defaultUser")}
 						</span>
 						<span className="text-xs text-slate-500 font-semibold">
 							{user.email}
@@ -113,7 +107,7 @@ export default function ProfileView({
 								{user.totalPoints}
 							</span>
 							<span className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">
-								Puntos
+								{t("profile_points")}
 							</span>
 						</div>
 						<div className="text-center px-3">
@@ -121,7 +115,7 @@ export default function ProfileView({
 								#{user.rank ?? "-"}
 							</span>
 							<span className="text-[9px] text-slate-500 uppercase tracking-wider font-bold">
-								Puesto
+								{t("profile_rank")}
 							</span>
 						</div>
 					</div>
@@ -129,13 +123,11 @@ export default function ProfileView({
 
 				{/* Edit Form */}
 				<div className="bg-slate-900/40 border border-slate-900 p-6 sm:p-8 rounded-3xl space-y-8">
-					{/* Avatar Upload Segment */}
+					{/* Avatar Upload */}
 					<div className="flex flex-col items-center gap-5">
 						<div className="relative group">
-							{/* Outer glow aura */}
 							<div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-600 opacity-20 blur-sm group-hover:opacity-45 transition-opacity" />
 
-							{/* Profile Image container */}
 							<div
 								onClick={triggerFileSelect}
 								className="relative w-28 h-28 rounded-full border-3 border-amber-500 overflow-hidden cursor-pointer shadow-2xl group active:scale-[0.98] transition-transform"
@@ -152,7 +144,6 @@ export default function ProfileView({
 									</div>
 								)}
 
-								{/* Visual Camera Hover Overlay */}
 								<div className="absolute inset-0 bg-slate-950/65 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity duration-200">
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
@@ -174,20 +165,18 @@ export default function ProfileView({
 										/>
 									</svg>
 									<span className="text-[9px] uppercase font-black text-slate-200 tracking-wider">
-										Subir Foto
+										{t("profile_uploadPhoto")}
 									</span>
 								</div>
 							</div>
 						</div>
 
-						{/* Sub text descriptor */}
 						<div className="text-center">
 							<span className="text-xs font-bold text-slate-350 block">
-								Foto de Perfil
+								{t("profile_photoSection")}
 							</span>
 							<p className="text-[10px] text-slate-500 mt-1 max-w-[200px] mx-auto">
-								Pulsa sobre el círculo o el botón inferior para cargar una
-								imagen desde tu dispositivo.
+								{t("profile_photoHelper")}
 							</p>
 
 							<button
@@ -195,10 +184,9 @@ export default function ProfileView({
 								onClick={triggerFileSelect}
 								className="mt-3 py-1.5 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[10px] font-bold text-slate-350 active:scale-[0.98] transition-all uppercase tracking-wider"
 							>
-								Buscar Archivo
+								{t("profile_btnBrowse")}
 							</button>
 
-							{/* Hidden Native File Input */}
 							<input
 								type="file"
 								ref={fileInputRef}
@@ -208,7 +196,6 @@ export default function ProfileView({
 							/>
 						</div>
 
-						{/* Local file validation errors */}
 						{errorMessage && (
 							<div className="w-full text-center text-xs text-red-400 font-semibold p-2.5 rounded-xl bg-red-500/10 border border-red-500/15">
 								{errorMessage}
@@ -216,28 +203,25 @@ export default function ProfileView({
 						)}
 					</div>
 
-					{/* Form details */}
 					<form onSubmit={handleSave} className="space-y-5">
-						{/* Input username */}
 						<div>
 							<label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-								Nombre de Participante
+								{t("profile_labelName")}
 							</label>
 							<input
 								type="text"
 								value={displayName}
 								onChange={(e) => setDisplayName(e.target.value)}
-								placeholder="Ingresa tu nombre"
+								placeholder={t("profile_placeholderName")}
 								maxLength={20}
 								className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all text-sm"
 								required
 							/>
 						</div>
 
-						{/* Read-only email */}
 						<div>
 							<label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
-								Correo Electrónico (No editable)
+								{t("profile_labelEmail")}
 							</label>
 							<input
 								type="email"
@@ -247,14 +231,12 @@ export default function ProfileView({
 							/>
 						</div>
 
-						{/* Success message banner */}
 						{showSuccess && (
 							<div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-semibold text-center animate-pulse">
-								¡Perfil actualizado exitosamente!
+								{t("profile_successMessage")}
 							</div>
 						)}
 
-						{/* Actions button */}
 						<button
 							type="submit"
 							disabled={isSaving || !displayName.trim()}
@@ -281,10 +263,10 @@ export default function ProfileView({
 											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 										/>
 									</svg>
-									<span>Guardando cambios...</span>
+									<span>{t("profile_btnSaving")}</span>
 								</>
 							) : (
-								<span>Guardar Cambios</span>
+								<span>{t("profile_btnSave")}</span>
 							)}
 						</button>
 					</form>

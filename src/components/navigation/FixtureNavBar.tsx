@@ -3,6 +3,7 @@
 
 import React, { useState, useMemo, ReactNode } from "react";
 import { Match } from "@/lib/mockData";
+import { useLanguage } from "@/context/LanguageContext";
 
 type FilterType = "ALL" | "PENDING" | "LIVE" | "FINISHED";
 
@@ -11,18 +12,13 @@ interface FixtureNavBarProps {
   onFilteredMatchesChange: (filtered: Match[]) => void;
 }
 
-
-
 function hasTeams(match: Match): boolean {
   return !!(match.teamHome && match.teamAway);
 }
 
 function matchesSearch(match: Match, newSearch: string): boolean {
-  
   if (newSearch.trim() === "") return true;
-
   if (!hasTeams(match)) return false;
-
   return (
     match.teamHome.toLowerCase().includes(newSearch.toLowerCase()) ||
     match.teamAway.toLowerCase().includes(newSearch.toLowerCase())
@@ -30,11 +26,12 @@ function matchesSearch(match: Match, newSearch: string): boolean {
 }
 
 export default function FixtureNavBar({ matches, onFilteredMatchesChange }: FixtureNavBarProps) {
-  const [filter, setFilter] = useState<FilterType>("ALL");
+  const [filter, setFilter] = useState<FilterType>("PENDING");
   const [search, setSearch] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<string>("ALL");
   const [selectedStage, setSelectedStage] = useState<string>("ALL");
   const [filteredCount, setFilteredCount] = useState<Number>(matches.length);
+  const { t } = useLanguage();
 
   const { groups, stages } = useMemo(() => {
     const all = Array.from(new Set(matches.map((m) => m.groupOrStage))).sort();
@@ -51,25 +48,19 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
     newStage: string = selectedStage,
   ) => {
     const filtered = matches.filter((match) => {
-
       const matchesStatus =
         newFilter === "ALL" ? true :
         newFilter === "PENDING" ? match.status === "SCHEDULED" :
         newFilter === "LIVE" ? match.status === "LIVE" :
         match.status === "FINISHED";
 
-      const matchesGroup =
-        newGroup === "ALL" ? true :
-        match.groupOrStage === newGroup;
+      const matchesGroup = newGroup === "ALL" ? true : match.groupOrStage === newGroup;
+      const matchesStage = newStage === "ALL" ? true : match.groupOrStage === newStage;
 
-      const matchesStage =
-        newStage === "ALL" ? true :
-        match.groupOrStage === newStage;
-
-      return  matchesStatus &&  matchesGroup && matchesStage && matchesSearch(match,newSearch);
+      return matchesStatus && matchesGroup && matchesStage && matchesSearch(match, newSearch);
     });
 
-    setFilteredCount(filtered.length)
+    setFilteredCount(filtered.length);
     onFilteredMatchesChange(filtered);
   };
 
@@ -79,7 +70,7 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const searchValue = e.target.value || ""
+    const searchValue = e.target.value || "";
     setSearch(searchValue);
     applyFilters(filter, searchValue);
   };
@@ -98,11 +89,15 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
     applyFilters(filter, search, "ALL", val);
   };
 
-  
+  const filterLabels: Record<FilterType, string> = {
+    ALL: t("fixtureNav_all"),
+    PENDING: t("fixtureNav_pending"),
+    LIVE: t("fixtureNav_live"),
+    FINISHED: t("fixtureNav_finished"),
+  };
 
   return (
     <div className="flex flex-col gap-4 border-b border-slate-800 pb-4">
-      {/* Status filters + count */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
           {(["ALL", "PENDING", "LIVE", "FINISHED"] as const).map((tab) => (
@@ -115,20 +110,16 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              {tab === "ALL" && "Todos"}
-              {tab === "PENDING" && "Pendientes"}
-              {tab === "LIVE" && "En Vivo"}
-              {tab === "FINISHED" && "Finalizados"}
+              {filterLabels[tab]}
             </button>
           ))}
         </div>
 
         <span className="text-xs text-slate-400">
-          Mostrando <strong className="text-slate-200">{filteredCount as ReactNode}</strong> partidos
+          {t("fixtureNav_count", { count: filteredCount as ReactNode as number })}
         </span>
       </div>
 
-      {/* Search + Group + Stage */}
       <div className="flex flex-wrap gap-3">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
@@ -140,7 +131,7 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
             type="text"
             value={search}
             onChange={handleSearchChange}
-            placeholder="Buscar selección..."
+            placeholder={t("fixtureNav_searchPlaceholder")}
             className="w-full bg-slate-900/60 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/60 transition-all"
           />
           {search && (
@@ -167,7 +158,7 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
                   : "border-slate-800 text-slate-200"
               }`}
             >
-              <option value="ALL">Todos los grupos</option>
+              <option value="ALL">{t("fixtureNav_allGroups")}</option>
               {groups.map((group) => (
                 <option key={group} value={group}>{group}</option>
               ))}
@@ -191,7 +182,7 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
                   : "border-slate-800 text-slate-200"
               }`}
             >
-              <option value="ALL">Todas las fases</option>
+              <option value="ALL">{t("fixtureNav_allStages")}</option>
               {stages.map((stage) => (
                 <option key={stage} value={stage}>{stage}</option>
               ))}

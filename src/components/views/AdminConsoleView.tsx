@@ -3,9 +3,11 @@
 import { useAdminConsole } from "@/hooks/useAdminView";
 import GroupCard from "../cards/GroupCard";
 import { useProde } from "@/context/ProdeContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function AdminConsoleView() {
 	const { currentUser } = useProde();
+	const { t } = useLanguage();
 
 	const {
 		subTab,
@@ -33,25 +35,25 @@ export default function AdminConsoleView() {
 
 	return (
 		<div className="bg-slate-900/40 border border-slate-900 p-5 rounded-3xl space-y-6">
-			{/* 🛠️ SELECTOR INTERNO DE SUB-CATEGORÍAS */}
+			{/* Sub tabs */}
 			<div className="flex gap-2 border-b border-slate-800 pb-3 text-xs font-bold">
 				<button
 					type="button"
 					onClick={() => setSubTab("users")}
 					className={`pb-2 px-1 transition-all border-b-2 ${subTab === "users" ? "border-amber-500 text-white" : "border-transparent text-slate-500 hover:text-slate-350"}`}
 				>
-					Participantes
+					{t("admin_tabUsers")}
 				</button>
 				<button
 					type="button"
 					onClick={() => setSubTab("groups")}
 					className={`pb-2 px-1 transition-all border-b-2 ${subTab === "groups" ? "border-amber-500 text-white" : "border-transparent text-slate-500 hover:text-slate-350"}`}
 				>
-					Grupos y Fases
+					{t("admin_tabGroups")}
 				</button>
 			</div>
 
-			{/* VISTA 1: CONTROL DE PARTICIPANTES */}
+			{/* Users tab */}
 			{subTab === "users" && (
 				<div className="space-y-4">
 					<div className="relative">
@@ -59,7 +61,7 @@ export default function AdminConsoleView() {
 							type="text"
 							value={adminSearch}
 							onChange={(e) => setAdminSearch(e.target.value)}
-							placeholder="Buscar usuario por nombre o correo..."
+							placeholder={t("admin_searchPlaceholder")}
 							className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-850 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
 						/>
 						<svg
@@ -80,11 +82,11 @@ export default function AdminConsoleView() {
 
 					{loadingAdmin ? (
 						<div className="text-center py-12 text-slate-500 text-xs animate-pulse">
-							Cargando base de datos de usuarios...
+							{t("admin_loadingUsers")}
 						</div>
 					) : filteredUsers.length === 0 ? (
 						<div className="text-center py-12 text-slate-600 text-xs italic">
-							No se encontraron usuarios.
+							{t("admin_noUsers")}
 						</div>
 					) : (
 						<div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
@@ -107,16 +109,14 @@ export default function AdminConsoleView() {
 										)}
 										<div className="flex flex-col">
 											<span className="font-bold text-slate-200 flex items-center gap-1.5">
-												{u.displayName || "Sin nombre"}
+												{u.displayName || t("admin_defaultName")}
 												{u.admin && (
 													<span className="text-[8px] bg-red-500/10 text-red-400 border border-red-500/20 px-1 rounded uppercase">
-														Staff
+														{t("admin_staffBadge")}
 													</span>
 												)}
 											</span>
-											<span className="text-[10px] text-slate-500">
-												{u.email}
-											</span>
+											<span className="text-[10px] text-slate-500">{u.email}</span>
 										</div>
 									</div>
 
@@ -156,9 +156,7 @@ export default function AdminConsoleView() {
 													<span className="block font-black text-amber-400 leading-tight">
 														{u.totalPoints}
 													</span>
-													<span className="text-[8px] text-slate-500 uppercase font-medium">
-														pts
-													</span>
+													<span className="text-[8px] text-slate-500 uppercase font-medium">pts</span>
 												</div>
 												<button
 													type="button"
@@ -168,12 +166,7 @@ export default function AdminConsoleView() {
 													}}
 													className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-850 text-slate-400 hover:text-amber-400 transition-colors"
 												>
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														viewBox="0 0 16 16"
-														fill="currentColor"
-														className="w-3.5 h-3.5"
-													>
+													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
 														<path d="M13.488 2.513a1.75 1.75 0 0 0-2.475 0L6.75 6.774a2.75 2.75 0 0 0-.596.892l-.848 2.047a.75.75 0 0 0 .98.98l2.047-.848a2.75 2.75 0 0 0 .892-.596l4.261-4.262a1.75 1.75 0 0 0 0-2.474Z" />
 														<path d="M4.75 3.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h6.5c.69 0 1.25-.56 1.25-1.25V9A.75.75 0 0 1 14 9v2.25A2.75 2.75 0 0 1 11.25 14h-6.5A2.75 2.75 0 0 1 2 11.25v-6.5A2.75 2.75 0 0 1 4.75 2H7a.75.75 0 0 1 0 1.5H4.75Z" />
 													</svg>
@@ -188,41 +181,40 @@ export default function AdminConsoleView() {
 				</div>
 			)}
 
-			{/* 🏆 VISTA 2: LISTAR Y CREAR GRUPOS */}
+			{/* Groups tab */}
 			{subTab === "groups" && (
 				<div className="space-y-6 animate-fadeIn">
-					{/* Formulario de Creación */}
 					<form
 						onSubmit={handleCreateGroup}
 						className="bg-slate-950/50 border border-slate-850 p-4 rounded-2xl space-y-3.5 text-xs"
 					>
 						<span className="font-black text-amber-400 tracking-wider uppercase block text-[10px]">
-							Crear Nuevo Grupo / Fase
+							{t("admin_createGroupTitle")}
 						</span>
 
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 							<div>
 								<label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-									Nombre del Grupo
+									{t("admin_labelGroupName")}
 								</label>
 								<input
 									type="text"
 									value={groupName}
 									onChange={(e) => setGroupName(e.target.value)}
-									placeholder="Ej: Grupo A, Octavos de Final"
+									placeholder={t("admin_placeholderGroupName")}
 									className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500"
 									required
 								/>
 							</div>
 							<div>
 								<label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-									Descripción (Opcional)
+									{t("admin_labelGroupDesc")}
 								</label>
 								<input
 									type="text"
 									value={groupDesc}
 									onChange={(e) => setGroupDesc(e.target.value)}
-									placeholder="Ej: Fase de grupos inicial"
+									placeholder={t("admin_placeholderGroupDesc")}
 									className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500"
 								/>
 							</div>
@@ -230,7 +222,7 @@ export default function AdminConsoleView() {
 
 						{groupSuccess && (
 							<div className="p-2 text-center font-semibold bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/15">
-								¡Grupo añadido/borrado correctamente en la base de datos!
+								{t("admin_successGroup")}
 							</div>
 						)}
 
@@ -239,25 +231,22 @@ export default function AdminConsoleView() {
 							disabled={isCreatingGroup || !groupName.trim()}
 							className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-extrabold tracking-wide hover:from-amber-400 disabled:opacity-50 transition-all uppercase"
 						>
-							{isCreatingGroup
-								? "Guardando en Firebase..."
-								: "Confirmar y Crear Grupo"}
+							{isCreatingGroup ? t("admin_btnSavingGroup") : t("admin_btnCreateGroup")}
 						</button>
 					</form>
 
-					{/* Lista de Grupos Existentes Renderizados con el Componente Modular */}
 					<div className="space-y-2">
 						<span className="font-black text-slate-400 tracking-wider uppercase block text-[10px]">
-							Grupos y Fases Registradas
+							{t("admin_existingGroups")}
 						</span>
 
 						{loadingGroups ? (
 							<div className="text-center py-8 text-slate-500 text-xs animate-pulse">
-								Cargando lista de grupos oficiales...
+								{t("admin_loadingGroups")}
 							</div>
 						) : groups.length === 0 ? (
 							<div className="text-center py-8 text-slate-600 text-xs italic border border-dashed border-slate-850 rounded-2xl">
-								No hay ningún grupo creado todavía en Firestore.
+								{t("admin_noGroups")}
 							</div>
 						) : (
 							<div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
