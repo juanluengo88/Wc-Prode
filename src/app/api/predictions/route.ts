@@ -21,11 +21,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
 	const body = await request.json();
-	const { uid, matchId, predictHome, predictAway } = body as {
+	const { uid, matchId, predictHome, predictAway, predictPenalties, predictPenaltiesWinner } = body as {
 		uid: string;
 		matchId: string;
 		predictHome: number;
 		predictAway: number;
+		predictPenalties: boolean;
+		predictPenaltiesWinner: "HOME_TEAM" | "AWAY_TEAM" | null;
 	};
 
 	const existing = await db
@@ -37,12 +39,14 @@ export async function POST(request: NextRequest) {
 
 	if (!existing.empty) {
 		const docRef = existing.docs[0].ref;
-		await docRef.update({ predictHome, predictAway });
+		await docRef.update({ predictHome, predictAway, predictPenalties: predictPenalties ?? false, predictPenaltiesWinner: predictPenaltiesWinner ?? null });
 		return NextResponse.json({
 			predictionId: docRef.id,
 			...existing.docs[0].data(),
 			predictHome,
 			predictAway,
+			predictPenalties: predictPenalties ?? false,
+			predictPenaltiesWinner: predictPenaltiesWinner ?? null,
 		} as Prediction);
 	}
 
@@ -51,6 +55,8 @@ export async function POST(request: NextRequest) {
 		matchId,
 		predictHome,
 		predictAway,
+		predictPenalties: predictPenalties ?? false,
+		predictPenaltiesWinner: predictPenaltiesWinner ?? null,
 		pointsEarned: null,
 	});
 
