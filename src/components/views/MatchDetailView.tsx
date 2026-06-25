@@ -167,7 +167,7 @@ export default function MatchDetailView({
 			{/* Main Content Card */}
 			<main className="max-w-4xl mx-auto px-4 py-8 sm:px-8 space-y-6">
 				{/* Banner with large flags */}
-				<div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-indigo-950/60 to-slate-900/90 border border-slate-800 p-8 shadow-2xl flex flex-col items-center">
+				<div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-indigo-950/60 to-slate-900/90 border border-slate-800 p-4 sm:p-8 shadow-2xl flex flex-col items-center">
 					<div className="absolute top-[-30%] left-[50%] -translate-x-[50%] w-[300px] h-[300px] rounded-full bg-amber-500/10 blur-[80px] pointer-events-none" />
 
 					{/* Time & Lock Banner */}
@@ -191,7 +191,7 @@ export default function MatchDetailView({
 					</div>
 
 					{/* Large flags and Name matchup */}
-					<div className="w-full flex items-center justify-between gap-6 py-6 max-w-xl">
+					<div className="w-full flex items-center justify-between gap-2 sm:gap-6 py-4 sm:py-6 max-w-xl">
 						{/* Home Team */}
 						<div className="flex-1 flex flex-col items-center text-center gap-3">
 							<img
@@ -200,7 +200,7 @@ export default function MatchDetailView({
 								className="w-20 h-14 sm:w-28 sm:h-20 object-cover rounded-2xl border border-slate-700/60 shadow-xl"
 							/>
 							<div className="space-y-1">
-								<h3 className="text-lg sm:text-2xl font-black text-white">
+								<h3 className="text-sm sm:text-2xl font-black text-white">
 									{match.teamHome}
 								</h3>
 								<span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">
@@ -234,14 +234,14 @@ export default function MatchDetailView({
 						<div className="flex flex-col items-center shrink-0">
 							{match.status === "FINISHED" || match.status === "LIVE" ? (
 								<div className="text-center">
-									<div className="flex items-center gap-4 bg-slate-950/80 px-5 py-3 rounded-2xl border border-slate-800">
-										<span className="text-3xl sm:text-5xl font-black text-white">
+									<div className="flex items-center gap-2 sm:gap-4 bg-slate-950/80 px-3 py-2 sm:px-5 sm:py-3 rounded-2xl border border-slate-800">
+										<span className="text-2xl sm:text-5xl font-black text-white">
 											{match.scoreHome}
 										</span>
-										<span className="text-amber-500 font-extrabold text-2xl">
+										<span className="text-amber-500 font-extrabold text-xl sm:text-2xl">
 											:
 										</span>
-										<span className="text-3xl sm:text-5xl font-black text-white">
+										<span className="text-2xl sm:text-5xl font-black text-white">
 											{match.scoreAway}
 										</span>
 									</div>
@@ -267,7 +267,7 @@ export default function MatchDetailView({
 								className="w-20 h-14 sm:w-28 sm:h-20 object-cover rounded-2xl border border-slate-700/60 shadow-xl"
 							/>
 							<div className="space-y-1">
-								<h3 className="text-lg sm:text-2xl font-black text-white">
+								<h3 className="text-sm sm:text-2xl font-black text-white">
 									{match.teamAway}
 								</h3>
 								<span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">
