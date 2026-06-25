@@ -96,6 +96,34 @@ export default function BottomNav() {
 					{t("bottomNav_leaderboard")}
 				</span>
 			</Link>
+
+			{/* Standings */}
+			<Link
+				href="/standings"
+				className={`flex flex-col items-center gap-1 group transition-all ${
+					isActive("/standings")
+						? "text-amber-400 scale-105"
+						: "text-slate-500 hover:text-slate-350"
+				}`}
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					strokeWidth={2}
+					stroke="currentColor"
+					className="w-5 h-5"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h.008v.008h-.008v-.008Zm0 3.75h.008v.008h-.008v-.008Zm0-7.5h.008v.008h-.008V5.625Z"
+					/>
+				</svg>
+				<span className="text-[9px] font-bold uppercase tracking-wider">
+					{t("bottomNav_standings")}
+				</span>
+			</Link>
 		</nav>
 	);
 }
