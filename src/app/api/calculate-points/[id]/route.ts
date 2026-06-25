@@ -18,7 +18,6 @@ export async function POST(
 
     const matchData = await getMatchById(id);
 
-  
     if ((matchData as any).pointsCalculated === true) {
       return NextResponse.json({
         success: false,

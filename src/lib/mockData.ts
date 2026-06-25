@@ -27,6 +27,8 @@ export interface Prediction {
 	predictHome: number;
 	predictAway: number;
 	pointsEarned: number | null;
+	predictPenalties: boolean;
+	predictPenaltiesWinner: "HOME_TEAM" | "AWAY_TEAM" | null;
 }
 
 export interface User {

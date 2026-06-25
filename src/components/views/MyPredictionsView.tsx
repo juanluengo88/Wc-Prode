@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Match, Prediction } from "../../lib/mockData";
 import { useLanguage } from "../../context/LanguageContext";
 import { localizeGroupOrStage } from "../../lib/translations";
@@ -9,16 +10,25 @@ interface MyPredictionsViewProps {
 	matches: Match[];
 	predictions: Prediction[];
 	onSelectMatch: (matchId: string) => void;
+	initialTab?: "ACTIVE" | "FINISHED";
 }
 
 export default function MyPredictionsView({
 	matches,
 	predictions,
 	onSelectMatch,
+	initialTab = "ACTIVE",
 }: MyPredictionsViewProps) {
-	const [subTab, setSubTab] = useState<"ACTIVE" | "FINISHED">("ACTIVE");
+	const router = useRouter();
 	const [currentTime, setCurrentTime] = useState<number>(0);
 	const { t, lang } = useLanguage();
+
+	const [subTab, setSubTabState] = useState<"ACTIVE" | "FINISHED">(initialTab);
+
+	const setSubTab = (tab: "ACTIVE" | "FINISHED") => {
+		setSubTabState(tab);
+		router.replace(`?tab=${tab}`, { scroll: false });
+	};
 
 	useEffect(() => {
 		const tick = () => setCurrentTime(Date.now());
@@ -197,18 +207,30 @@ export default function MyPredictionsView({
 										</div>
 
 										<div className="flex flex-col items-center justify-center bg-slate-950 px-3.5 py-1.5 rounded-xl border border-slate-850">
-											<div className="flex items-center gap-1.5">
-												<span className="text-sm font-black text-amber-400">
-													{prediction.predictHome}
-												</span>
-												<span className="text-slate-655 font-bold text-xs">-</span>
-												<span className="text-sm font-black text-amber-400">
-													{prediction.predictAway}
-												</span>
-											</div>
+											{prediction.predictPenalties ? (
+												<div className="flex flex-col items-center gap-0.5">
+													<span className="text-[9px] font-black text-violet-400 uppercase tracking-wider">Penales</span>
+													<span className="text-sm font-black text-violet-300">
+														{prediction.predictPenaltiesWinner === "HOME_TEAM" ? match.teamHome : match.teamAway}
+													</span>
+												</div>
+											) : (
+												<div className="flex items-center gap-1.5">
+													<span className="text-sm font-black text-amber-400">
+														{prediction.predictHome}
+													</span>
+													<span className="text-slate-655 font-bold text-xs">-</span>
+													<span className="text-sm font-black text-amber-400">
+														{prediction.predictAway}
+													</span>
+												</div>
+											)}
+
 											{(match.status === "FINISHED" || match.status === "LIVE") && (
 												<div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1 pt-0.5 border-t border-slate-850/60">
-													{t("predictions_real")} {match.scoreHome}-{match.scoreAway}
+													{match.scoreDuration === "PENALTY_SHOOTOUT"
+														? `Pen: ${match.scorePenaltiesHome}-${match.scorePenaltiesAway}`
+														: `${t("predictions_real")} ${match.scoreHome}-${match.scoreAway}`}
 												</div>
 											)}
 										</div>

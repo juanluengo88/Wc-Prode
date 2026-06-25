@@ -6,8 +6,15 @@ import { db } from "@/lib/firebaseAdmin";
  * @returns 
  */
 export function assertPrediction(prediction: Prediction, match: Match): number {
-  const realHome = match.scoreHome;
-  const realAway = match.scoreAway;
+  // Penalty prediction path
+  if (prediction.predictPenalties) {
+    if (match.scoreDuration !== "PENALTY_SHOOTOUT") return 0;
+    return prediction.predictPenaltiesWinner === match.winner ? 3 : 0;
+  }
+
+  // Regular prediction path
+  const realHome = match.scoreRegularHome ?? match.scoreHome;
+  const realAway = match.scoreRegularAway ?? match.scoreAway;
   const predHome = prediction.predictHome;
   const predAway = prediction.predictAway;
 
@@ -19,7 +26,6 @@ export function assertPrediction(prediction: Prediction, match: Match): number {
     return 3;
   }
 
-  // Use winner field from API if available, otherwise derive from score
   const winner = match.winner ?? (
     realHome > realAway ? "HOME_TEAM" : realAway > realHome ? "AWAY_TEAM" : "DRAW"
   );

@@ -77,6 +77,8 @@ export function useProdeApp() {
 		matchId: string,
 		predictHome: number,
 		predictAway: number,
+		predictPenalties: boolean = false,
+		predictPenaltiesWinner: "HOME_TEAM" | "AWAY_TEAM" | null = null,
 	) => {
 		if (!currentUser) return;
 
@@ -88,6 +90,8 @@ export function useProdeApp() {
 				matchId,
 				predictHome,
 				predictAway,
+				predictPenalties,
+				predictPenaltiesWinner,
 			}),
 		});
 		const saved: Prediction = await res.json();

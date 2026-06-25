@@ -18,6 +18,8 @@ interface MatchDetailViewProps {
 		matchId: string,
 		predictHome: number,
 		predictAway: number,
+		predictPenalties: boolean,
+		predictPenaltiesWinner: "HOME_TEAM" | "AWAY_TEAM" | null,
 	) => Promise<void>;
 	onBack: () => void;
 }
@@ -42,6 +44,8 @@ export default function MatchDetailView({
 	const [timeLeftStr, setTimeLeftStr] = useState("");
 	const [isLocked, setIsLocked] = useState(false);
 	const [lastDiff, setLastDiff] = useState(0);
+	const [predictPenalties, setPredictPenalties] = useState(prediction?.predictPenalties ?? false);
+	const [predictPenaltiesWinner, setPredictPenaltiesWinner] = useState<"HOME_TEAM" | "AWAY_TEAM" | null>(prediction?.predictPenaltiesWinner ?? null);
 	const getTime = useServerTime();
 
 	const { data: espn } = useMatchDetails(match.espnMatchId || match.matchId);
@@ -50,6 +54,8 @@ export default function MatchDetailView({
 		if (prediction) {
 			setHomeScore(prediction.predictHome.toString());
 			setAwayScore(prediction.predictAway.toString());
+			setPredictPenalties(prediction.predictPenalties ?? false);
+			setPredictPenaltiesWinner(prediction.predictPenaltiesWinner ?? null);
 		}
 	}, [prediction]);
 
@@ -122,6 +128,8 @@ export default function MatchDetailView({
 				match.matchId,
 				parseInt(homeScore),
 				parseInt(awayScore),
+				predictPenalties,
+				predictPenalties ? predictPenaltiesWinner : null,
 			);
 			setIsSaving(false);
 			setShowSuccess(true);
@@ -131,7 +139,9 @@ export default function MatchDetailView({
 		}
 	};
 
-	const isFormComplete = homeScore !== "" && awayScore !== "";
+	const isFormComplete = predictPenalties
+		? predictPenaltiesWinner !== null
+		: homeScore !== "" && awayScore !== "";
 
 	return (
 		<div className="flex-1 bg-slate-950 text-slate-100 min-h-screen pb-16">
@@ -314,27 +324,77 @@ export default function MatchDetailView({
 									onSubmit={handleSave}
 									className="max-w-md mx-auto space-y-6 flex flex-col items-center"
 								>
-									<div className="flex items-center gap-6 justify-center">
-										<input
-											type="text"
-											maxLength={2}
-											value={homeScore}
-											disabled={isLocked}
-											onChange={(e) => handleInputChange("home", e.target.value)}
-											placeholder="0"
-											className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-										/>
-										<span className="text-slate-600 font-black text-3xl mt-2">-</span>
-										<input
-											type="text"
-											maxLength={2}
-											value={awayScore}
-											disabled={isLocked}
-											onChange={(e) => handleInputChange("away", e.target.value)}
-											placeholder="0"
-											className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-										/>
-									</div>
+								{/* Toggle penales */}
+									{!isLocked && !match.groupOrStage.startsWith("Grupo") && (
+										<div className="flex items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-2xl px-4 py-3 w-full justify-between">
+											<div className="flex flex-col">
+												<span className="text-sm font-bold text-slate-200">¿Va a penales?</span>
+												<span className="text-[10px] text-slate-500">Solo para fases eliminatorias</span>
+											</div>
+											<button
+												type="button"
+												onClick={() => {
+													setPredictPenalties((v) => !v);
+													setPredictPenaltiesWinner(null);
+												}}
+												className={`relative w-12 h-6 rounded-full transition-colors duration-200 border ${predictPenalties ? "bg-violet-600 border-violet-500" : "bg-slate-800 border-slate-700"}`}
+											>
+												<span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${predictPenalties ? "translate-x-6" : "translate-x-0"}`} />
+											</button>
+										</div>
+									)}
+
+									{predictPenalties ? (
+										/* Selector de ganador en penales */
+										<div className="w-full space-y-3">
+											<p className="text-xs font-bold text-slate-400 uppercase tracking-wide text-center">
+												¿Quién gana en penales?
+											</p>
+											<div className="grid grid-cols-2 gap-3">
+												<button
+													type="button"
+													disabled={isLocked}
+													onClick={() => setPredictPenaltiesWinner("HOME_TEAM")}
+													className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all font-bold text-sm ${predictPenaltiesWinner === "HOME_TEAM" ? "border-violet-500 bg-violet-500/15 text-violet-300" : "border-slate-700 bg-slate-950/60 text-slate-400 hover:border-slate-600"}`}
+												>
+													<img src={match.teamHomeFlag} alt={match.teamHome} className="w-10 h-7 object-cover rounded" />
+													{match.teamHome}
+												</button>
+												<button
+													type="button"
+													disabled={isLocked}
+													onClick={() => setPredictPenaltiesWinner("AWAY_TEAM")}
+													className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all font-bold text-sm ${predictPenaltiesWinner === "AWAY_TEAM" ? "border-violet-500 bg-violet-500/15 text-violet-300" : "border-slate-700 bg-slate-950/60 text-slate-400 hover:border-slate-600"}`}
+												>
+													<img src={match.teamAwayFlag} alt={match.teamAway} className="w-10 h-7 object-cover rounded" />
+													{match.teamAway}
+												</button>
+											</div>
+										</div>
+									) : (
+										/* Inputs de score normales */
+										<div className="flex items-center gap-6 justify-center">
+											<input
+												type="text"
+												maxLength={2}
+												value={homeScore}
+												disabled={isLocked}
+												onChange={(e) => handleInputChange("home", e.target.value)}
+												placeholder="0"
+												className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+											/>
+											<span className="text-slate-600 font-black text-3xl">-</span>
+											<input
+												type="text"
+												maxLength={2}
+												value={awayScore}
+												disabled={isLocked}
+												onChange={(e) => handleInputChange("away", e.target.value)}
+												placeholder="0"
+												className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+											/>
+										</div>
+									)}
 
 									{showSuccess && (
 										<div className="w-full p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm text-center font-semibold">
