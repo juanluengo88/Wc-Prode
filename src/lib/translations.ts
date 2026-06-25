@@ -33,7 +33,7 @@ const translations = {
 		standings_colGA: "GC",
 		standings_colGD: "DG",
 		standings_colPts: "Pts",
-		standings_qualifyLegend: "Clasifican a octavos",
+		standings_qualifyLegend: "Clasifican a dieciseisavos de final",
 		standings_topScorersTitle: "Goleadores",
 		standings_goalsUnit: "goles",
 
