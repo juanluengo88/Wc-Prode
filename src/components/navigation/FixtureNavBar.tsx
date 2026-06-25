@@ -15,8 +15,6 @@ interface FixtureNavBarProps {
   selectedStage: string;
   filteredCount: number;
   onSearchChange: (v: string) => void;
-  onGroupChange: (v: string) => void;
-  onStageChange: (v: string) => void;
 }
 
 export default function FixtureNavBar({
@@ -26,14 +24,29 @@ export default function FixtureNavBar({
   selectedStage,
   filteredCount,
   onSearchChange,
-  onGroupChange,
-  onStageChange,
 }: FixtureNavBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLanguage();
 
   const tab = (searchParams.get("tab") as TabType) || "todos";
+
+  const buildUrl = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [k, v] of Object.entries(updates)) {
+      if (v === "ALL" || v === "todos" || v === "") params.delete(k);
+      else params.set(k, v);
+    }
+    const qs = params.toString();
+    return qs ? `/fixture?${qs}` : "/fixture";
+  };
+
+  const setGroup = (v: string) => {
+    router.replace(buildUrl({ group: v, stage: "ALL" }), { scroll: false });
+  };
+  const setStage = (v: string) => {
+    router.replace(buildUrl({ stage: v, group: "ALL" }), { scroll: false });
+  };
 
   const { groups, stages } = useMemo(() => {
     const all = Array.from(new Set(matches.map((m) => m.groupOrStage))).sort();
@@ -57,7 +70,7 @@ export default function FixtureNavBar({
           {tabs.map(({ key, label }) => (
             <button
               key={key}
-              onClick={() => router.push(key === "todos" ? "/fixture" : `/fixture?tab=${key}`)}
+              onClick={() => router.push(buildUrl({ tab: key }))}
               className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                 tab === key
                   ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/10"
@@ -105,7 +118,7 @@ export default function FixtureNavBar({
           <div className="relative">
             <select
               value={selectedGroup}
-              onChange={(e) => onGroupChange(e.target.value)}
+              onChange={(e) => setGroup(e.target.value)}
               className={`appearance-none bg-slate-900/60 border rounded-xl px-4 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/60 transition-all cursor-pointer ${
                 selectedGroup !== "ALL"
                   ? "border-amber-500/60 text-amber-400"
@@ -129,7 +142,7 @@ export default function FixtureNavBar({
           <div className="relative">
             <select
               value={selectedStage}
-              onChange={(e) => onStageChange(e.target.value)}
+              onChange={(e) => setStage(e.target.value)}
               className={`appearance-none bg-slate-900/60 border rounded-xl px-4 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/60 transition-all cursor-pointer ${
                 selectedStage !== "ALL"
                   ? "border-amber-500/60 text-amber-400"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Match, Prediction, User } from "../../lib/mockData";
 import MotivanationalBanner from "../banners/MotivationalBanner";
 import MatchCard from "@/components/cards/MatchCard";
@@ -30,9 +30,9 @@ export default function FixtureView({
 
   const tab = searchParams.get("tab") || "todos";
   const page = parseInt(searchParams.get("page") || "1", 10);
+  const selectedGroup = searchParams.get("group") || "ALL";
+  const selectedStage = searchParams.get("stage") || "ALL";
   const [search, setSearch] = useState("");
-  const [selectedGroup, setSelectedGroup] = useState("ALL");
-  const [selectedStage, setSelectedStage] = useState("ALL");
   const matchesPerPage = 20;
 
   const filteredMatches = React.useMemo(() => {
@@ -82,8 +82,6 @@ export default function FixtureView({
           selectedGroup={selectedGroup}
           selectedStage={selectedStage}
           onSearchChange={setSearch}
-          onGroupChange={(g) => { setSelectedGroup(g); setSelectedStage("ALL"); }}
-          onStageChange={(s) => { setSelectedStage(s); setSelectedGroup("ALL"); }}
           filteredCount={filteredMatches.length}
         />
 
