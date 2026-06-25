@@ -6,7 +6,8 @@ import MotivanationalBanner from "../banners/MotivationalBanner";
 import MatchCard from "@/components/cards/MatchCard";
 import FixtureNavBar from "@/components/navigation/FixtureNavBar";
 import { useFixtureView } from "@/hooks/useFixtureView";
-import { useRouter, useSearchParams } from "next/navigation"; // 👈 IMPORTAMOS LOS HOOKS DE NAVEGACIÓN
+import { useRouter, useSearchParams } from "next/navigation";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface FixtureViewProps {
   user: User;
@@ -23,7 +24,8 @@ export default function FixtureView({
 }: FixtureViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+  const { t } = useLanguage();
+
   const {
     filteredMatches,
     setFilteredMatches,
@@ -33,21 +35,18 @@ export default function FixtureView({
     teamsAreDefined
   } = useFixtureView({ matches, predictions });
 
-  // 🕒 LEEMOS LA PÁGINA INICIAL DE LA URL (?page=X). Si no existe, por defecto es 1.
   const queryPage = searchParams.get("page");
   const initialPage = queryPage ? parseInt(queryPage, 10) : 1;
 
   const [currentPage, setCurrentPage] = useState<number>(initialPage);
   const matchesPerPage = 20;
 
-  // Sincronizar el estado local si la URL cambia externamente (ej: botón atrás del navegador)
   useEffect(() => {
     if (queryPage) {
       setCurrentPage(parseInt(queryPage, 10));
     }
   }, [queryPage]);
 
-  // Si los filtros cambian la cantidad de partidos, reiniciamos la paginación de forma segura en la URL
   useEffect(() => {
     const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
     if (currentPage > totalPages && totalPages > 0) {
@@ -55,22 +54,14 @@ export default function FixtureView({
     }
   }, [filteredMatches.length]);
 
-  // Cálculos de índices matemáticos para rebanar el array
   const indexOfLastMatch = currentPage * matchesPerPage;
   const indexOfFirstMatch = indexOfLastMatch - matchesPerPage;
   const currentMatches = filteredMatches.slice(indexOfFirstMatch, indexOfLastMatch);
-  
-  // Total de páginas redondeado hacia arriba
   const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
 
-  // 🚀 FUNCIÓN CAMBIAR PÁGINA: Actualiza el estado y lo inyecta en la URL de Next.js
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
-    
-    // Modificamos la URL sin recargar la página para que quede guardada en el historial
     router.push(`?page=${pageNumber}`, { scroll: false });
-
-    // Scroll suave hacia arriba para que el usuario vea el inicio de la nueva página
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -100,13 +91,10 @@ export default function FixtureView({
                 d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
               />
             </svg>
-            <p className="text-slate-400 font-medium">
-              No hay partidos en esta categoría en este momento.
-            </p>
+            <p className="text-slate-400 font-medium">{t("fixture_empty")}</p>
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Grilla que renderiza únicamente los 20 mapeados de la página actual */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {currentMatches.map((match) => {
                 const tbdTeams = !teamsAreDefined(match);
@@ -129,29 +117,26 @@ export default function FixtureView({
               })}
             </div>
 
-            {/* CONTROLES DE PAGINACIÓN INTERACTIVA DE TU PRODE */}
             {totalPages > 1 && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-900 text-xs text-slate-400">
                 <span>
-                  Mostrando <strong className="text-slate-200">{indexOfFirstMatch + 1}</strong> a{" "}
-                  <strong className="text-slate-200">
-                    {indexOfLastMatch > filteredMatches.length ? filteredMatches.length : indexOfLastMatch}
-                  </strong>{" "}
-                  de <strong className="text-slate-200">{filteredMatches.length}</strong> partidos
+                  {t("fixture_showing", {
+                    start: indexOfFirstMatch + 1,
+                    end: indexOfLastMatch > filteredMatches.length ? filteredMatches.length : indexOfLastMatch,
+                    total: filteredMatches.length,
+                  })}
                 </span>
 
                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                  {/* Botón Atrás */}
                   <button
                     type="button"
                     disabled={currentPage === 1}
                     onClick={() => handlePageChange(currentPage - 1)}
                     className="p-2 rounded-xl bg-slate-900 border border-slate-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-800 transition-all font-bold text-slate-200"
                   >
-                    Anterior
+                    {t("fixture_prev")}
                   </button>
 
-                  {/* Números de Página Interactivos */}
                   {Array.from({ length: totalPages }, (_, index) => {
                     const pageNumber = index + 1;
                     return (
@@ -170,14 +155,13 @@ export default function FixtureView({
                     );
                   })}
 
-                  {/* Botón Siguiente */}
                   <button
                     type="button"
                     disabled={currentPage === totalPages}
                     onClick={() => handlePageChange(currentPage + 1)}
                     className="p-2 rounded-xl bg-slate-900 border border-slate-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-800 transition-all font-bold text-slate-200"
                   >
-                    Siguiente
+                    {t("fixture_next")}
                   </button>
                 </div>
               </div>

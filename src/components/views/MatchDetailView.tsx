@@ -7,6 +7,8 @@ import { teamsAreDefined } from "@/lib/matchUtils";
 import { useRouter } from "next/navigation";
 import { Team } from "@/lib/footballDataApi";
 import { useMatchDetails } from "@/hooks/useMatchDetails";
+import { useLanguage } from "@/context/LanguageContext";
+import { localizeGroupOrStage } from "@/lib/translations";
 
 interface MatchDetailViewProps {
 	match: Match;
@@ -28,6 +30,7 @@ export default function MatchDetailView({
 	onBack,
 }: MatchDetailViewProps) {
 	const router = useRouter();
+	const { t, lang } = useLanguage();
 	const [homeScore, setHomeScore] = useState(
 		prediction?.predictHome.toString() ?? "0",
 	);
@@ -58,7 +61,7 @@ export default function MatchDetailView({
 
 			if (diff <= 15 * 60 * 1000 || match.status !== "SCHEDULED") {
 				setIsLocked(true);
-				setTimeLeftStr("PRONÓSTICOS CERRADOS");
+				setTimeLeftStr(t("matchDetail_closed"));
 				if (match.status === "LIVE" && lastDiff > 5 * 60) {
 					router.refresh();
 					setLastDiff(0);
@@ -77,19 +80,19 @@ export default function MatchDetailView({
 			const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
 			const seconds = Math.floor((diff % (60 * 1000)) / 1000);
 
-			let parts = [];
+			const parts = [];
 			if (days > 0) parts.push(`${days}d`);
 			if (hours > 0 || days > 0) parts.push(`${hours}h`);
 			parts.push(`${minutes}m`);
 			parts.push(`${seconds}s`);
 
-			setTimeLeftStr(`Cierra en: ${parts.join(" ")}`);
+			setTimeLeftStr(t("matchDetail_closesIn", { time: parts.join(" ") }));
 		};
 
 		calculateTimeLeft();
 		const timer = setInterval(calculateTimeLeft, 1000);
 		return () => clearInterval(timer);
-	}, [match]);
+	}, [match, t]);
 
 	const handleRedirectionToTeam = (teamName: string) => {
 		const teamInDB = teams.find((t) => t.name === teamName);
@@ -132,13 +135,11 @@ export default function MatchDetailView({
 
 	return (
 		<div className="flex-1 bg-slate-950 text-slate-100 min-h-screen pb-16">
-			{/* Detail Header */}
 			<header className="sticky top-0 z-40 backdrop-blur-md bg-slate-900/80 border-b border-slate-800 px-4 py-4 sm:px-8">
 				<div className="max-w-4xl mx-auto flex items-center gap-4">
 					<button
 						onClick={onBack}
 						className="flex items-center justify-center p-2 rounded-xl bg-slate-800 hover:bg-slate-700 transition-colors border border-slate-700/60"
-						title="Volver"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -157,20 +158,18 @@ export default function MatchDetailView({
 					</button>
 					<div>
 						<h2 className="text-lg font-extrabold text-white">
-							Detalle de Partido
+							{t("matchDetail_title")}
 						</h2>
-						<p className="text-xs text-slate-400">{match.groupOrStage}</p>
+						<p className="text-xs text-slate-400">{localizeGroupOrStage(match.groupOrStage, lang)}</p>
 					</div>
 				</div>
 			</header>
 
-			{/* Main Content Card */}
 			<main className="max-w-4xl mx-auto px-4 py-8 sm:px-8 space-y-6">
-				{/* Banner with large flags */}
+				{/* Banner with flags */}
 				<div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-indigo-950/60 to-slate-900/90 border border-slate-800 p-4 sm:p-8 shadow-2xl flex flex-col items-center">
 					<div className="absolute top-[-30%] left-[50%] -translate-x-[50%] w-[300px] h-[300px] rounded-full bg-amber-500/10 blur-[80px] pointer-events-none" />
 
-					{/* Time & Lock Banner */}
 					<div className="text-center mb-6">
 						<span
 							className={`inline-block px-4 py-1.5 rounded-full text-xs font-black uppercase border ${isLocked ? "bg-red-500/10 text-red-400 border-red-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 animate-pulse"}`}
@@ -190,7 +189,6 @@ export default function MatchDetailView({
 						</span>
 					</div>
 
-					{/* Large flags and Name matchup */}
 					<div className="w-full flex items-center justify-between gap-2 sm:gap-6 py-4 sm:py-6 max-w-xl">
 						{/* Home Team */}
 						<div className="flex-1 flex flex-col items-center text-center gap-3">
@@ -204,10 +202,9 @@ export default function MatchDetailView({
 									{match.teamHome}
 								</h3>
 								<span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">
-									Local
+									{t("matchDetail_home")}
 								</span>
 							</div>
-							{/* 🌟 BOTÓN VER PERFIL LOCAL (USA ID DE TU DB) */}
 							<button
 								type="button"
 								onClick={() => handleRedirectionToTeam(match.teamHome)}
@@ -226,11 +223,11 @@ export default function MatchDetailView({
 										clipRule="evenodd"
 									/>
 								</svg>
-								Ver Plantel
+								{t("matchDetail_viewSquad")}
 							</button>
 						</div>
 
-						{/* Score indicator */}
+						{/* Score */}
 						<div className="flex flex-col items-center shrink-0">
 							{match.status === "FINISHED" || match.status === "LIVE" ? (
 								<div className="text-center">
@@ -238,9 +235,7 @@ export default function MatchDetailView({
 										<span className="text-2xl sm:text-5xl font-black text-white">
 											{match.scoreHome}
 										</span>
-										<span className="text-amber-500 font-extrabold text-xl sm:text-2xl">
-											:
-										</span>
+										<span className="text-amber-500 font-extrabold text-xl sm:text-2xl">:</span>
 										<span className="text-2xl sm:text-5xl font-black text-white">
 											{match.scoreAway}
 										</span>
@@ -248,7 +243,7 @@ export default function MatchDetailView({
 									{match.status === "LIVE" && (
 										<span className="inline-flex items-center gap-1.5 mt-2 bg-red-500/10 text-red-400 text-[10px] font-black uppercase px-3 py-1 rounded-full border border-red-500/25 animate-pulse">
 											<span className="w-1.5 h-1.5 rounded-full bg-red-500" />{" "}
-											Partido en curso
+											{t("matchDetail_live")}
 										</span>
 									)}
 								</div>
@@ -271,10 +266,9 @@ export default function MatchDetailView({
 									{match.teamAway}
 								</h3>
 								<span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold block">
-									Visitante
+									{t("matchDetail_away")}
 								</span>
 							</div>
-							{/* 🌟 BOTÓN VER PERFIL VISITANTE (USA ID DE TU DB) */}
 							<button
 								type="button"
 								onClick={() => handleRedirectionToTeam(match.teamAway)}
@@ -293,27 +287,27 @@ export default function MatchDetailView({
 										clipRule="evenodd"
 									/>
 								</svg>
-								Ver Plantel
+								{t("matchDetail_viewSquad")}
 							</button>
 						</div>
 					</div>
 				</div>
 
-				{/* Prediction Form Section */}
+				{/* Prediction Form */}
 				{match.status === "SCHEDULED" && (
 					<div className="bg-slate-900/60 border border-slate-850 p-6 rounded-3xl shadow-xl">
 						{!teamsAreDefined(match) ? (
 							<div className="flex flex-col items-center gap-3 py-4">
 								<p className="text-sm font-bold text-slate-300 text-center">
-									Equipos pendientes de clasificación
+									{t("matchDetail_pendingTeams")}
 								</p>
 							</div>
 						) : (
 							<>
 								<h4 className="text-sm font-bold text-slate-300 mb-6 uppercase tracking-wider text-center">
 									{isLocked
-										? "Tu pronóstico registrado"
-										: "Ingresa tu pronóstico"}
+										? t("matchDetail_registeredPrediction")
+										: t("matchDetail_enterPrediction")}
 								</h4>
 
 								<form
@@ -321,40 +315,30 @@ export default function MatchDetailView({
 									className="max-w-md mx-auto space-y-6 flex flex-col items-center"
 								>
 									<div className="flex items-center gap-6 justify-center">
-										<div className="flex flex-col items-center gap-2">
-											<input
-												type="text"
-												maxLength={2}
-												value={homeScore}
-												disabled={isLocked}
-												onChange={(e) =>
-													handleInputChange("home", e.target.value)
-												}
-												placeholder="0"
-												className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-											/>
-										</div>
-										<span className="text-slate-600 font-black text-3xl mt-2">
-											-
-										</span>
-										<div className="flex flex-col items-center gap-2">
-											<input
-												type="text"
-												maxLength={2}
-												value={awayScore}
-												disabled={isLocked}
-												onChange={(e) =>
-													handleInputChange("away", e.target.value)
-												}
-												placeholder="0"
-												className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-											/>
-										</div>
+										<input
+											type="text"
+											maxLength={2}
+											value={homeScore}
+											disabled={isLocked}
+											onChange={(e) => handleInputChange("home", e.target.value)}
+											placeholder="0"
+											className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+										/>
+										<span className="text-slate-600 font-black text-3xl mt-2">-</span>
+										<input
+											type="text"
+											maxLength={2}
+											value={awayScore}
+											disabled={isLocked}
+											onChange={(e) => handleInputChange("away", e.target.value)}
+											placeholder="0"
+											className="w-16 h-16 rounded-2xl bg-slate-950 border border-slate-800 text-center font-black text-3xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+										/>
 									</div>
 
 									{showSuccess && (
 										<div className="w-full p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm text-center font-semibold">
-											¡Pronóstico guardado exitosamente!
+											{t("matchDetail_successSaved")}
 										</div>
 									)}
 
@@ -365,12 +349,12 @@ export default function MatchDetailView({
 											className="cursor-pointer w-full max-w-xs py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-bold text-sm hover:from-amber-400 hover:to-yellow-500 active:scale-[0.98] transition-all duration-200 shadow-lg flex items-center justify-center gap-2"
 										>
 											{isSaving ? (
-												<span>Guardando...</span>
+												<span>{t("matchDetail_btnSaving")}</span>
 											) : (
 												<span>
 													{prediction
-														? "Actualizar Pronóstico"
-														: "Guardar Pronóstico"}
+														? t("matchDetail_btnUpdate")
+														: t("matchDetail_btnSave")}
 												</span>
 											)}
 										</button>
@@ -381,13 +365,13 @@ export default function MatchDetailView({
 					</div>
 				)}
 
-				{/* Finished points badge */}
+				{/* Points badge */}
 				{match.status === "FINISHED" &&
 					prediction &&
 					prediction.pointsEarned !== null && (
 						<div className="bg-slate-900/60 border border-slate-850 p-4 rounded-3xl text-center">
 							<span className="text-sm font-bold text-slate-400">
-								Puntos obtenidos:{" "}
+								{t("matchDetail_pointsEarned")}{" "}
 								<strong className="text-amber-400">
 									+{prediction.pointsEarned}
 								</strong>
@@ -395,60 +379,49 @@ export default function MatchDetailView({
 						</div>
 					)}
 
-				{/* Probabilidades Pre-partido */}
+				{/* Pre-match stats */}
 				{match.status === "SCHEDULED" && espn && (
 					<div className="space-y-6">
 						{espn.probabilidadesPrediccion?.tieneOdds && (
 							<div className="bg-slate-900/60 border border-slate-850 p-6 rounded-3xl shadow-xl space-y-4">
 								<div>
 									<h4 className="text-sm font-bold text-white uppercase tracking-wide">
-										Probabilidades del Mercado
+										{t("matchDetail_marketProbTitle")}
 									</h4>
 									<p className="text-xs text-slate-400">
-										Cálculo algorítmico en base a las cuotas de las casas de
-										apuestas
+										{t("matchDetail_marketProbSubtitle")}
 									</p>
 								</div>
 								<div className="space-y-2">
 									<div className="w-full flex h-4 rounded-full overflow-hidden bg-slate-950 border border-slate-800">
 										<div
-											style={{
-												width: `${espn.probabilidadesPrediccion.local}%`,
-											}}
-											className="bg-indigo-500 flex items-center justify-center text-[10px] font-black text-white"
+											style={{ width: `${espn.probabilidadesPrediccion.local}%` }}
+											className="bg-indigo-500"
 										/>
 										<div
-											style={{
-												width: `${espn.probabilidadesPrediccion.empate}%`,
-											}}
-											className="bg-slate-600 flex items-center justify-center text-[10px] font-black text-white"
+											style={{ width: `${espn.probabilidadesPrediccion.empate}%` }}
+											className="bg-slate-600"
 										/>
 										<div
-											style={{
-												width: `${espn.probabilidadesPrediccion.visitante}%`,
-											}}
-											className="bg-amber-500 flex items-center justify-center text-[10px] font-black text-slate-950"
+											style={{ width: `${espn.probabilidadesPrediccion.visitante}%` }}
+											className="bg-amber-500"
 										/>
 									</div>
 									<div className="grid grid-cols-3 text-center text-xs p-1">
 										<div className="flex flex-col">
-											<span className="text-indigo-400 font-bold">
-												{match.teamHome}
-											</span>
+											<span className="text-indigo-400 font-bold">{match.teamHome}</span>
 											<span className="text-white font-black text-base">
 												{espn.probabilidadesPrediccion.local}%
 											</span>
 										</div>
 										<div className="flex flex-col">
-											<span className="text-slate-400 font-bold">Empate</span>
+											<span className="text-slate-400 font-bold">{t("matchDetail_draw")}</span>
 											<span className="text-white font-black text-base">
 												{espn.probabilidadesPrediccion.empate}%
 											</span>
 										</div>
 										<div className="flex flex-col">
-											<span className="text-amber-400 font-bold">
-												{match.teamAway}
-											</span>
+											<span className="text-amber-400 font-bold">{match.teamAway}</span>
 											<span className="text-white font-black text-base">
 												{espn.probabilidadesPrediccion.visitante}%
 											</span>
@@ -458,79 +431,50 @@ export default function MatchDetailView({
 							</div>
 						)}
 
-						{/* Rachas Recientes */}
+						{/* Recent form */}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<div className="bg-slate-900/40 border border-slate-900 p-5 rounded-3xl space-y-3">
-								<h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">
-									Últimos partidos de {match.teamHome}
-								</h4>
-								<div className="space-y-2">
-									{Array.isArray(espn.previaEstadisticas?.rachaHome) ? (
-										espn.previaEstadisticas.rachaHome.map((r, idx) => (
-											<div
-												key={idx}
-												className="flex justify-between items-center bg-slate-950/70 border border-slate-900 px-3 py-2.5 rounded-xl text-xs"
-											>
-												<span className="text-slate-300 font-semibold truncate w-[110px] sm:w-[130px] text-left">
-													vs {r.oponente}
-												</span>
-												<span className="font-mono text-slate-400 font-bold text-center flex-1">
-													{r.score}
-												</span>
-												<span
-													className={`w-6 h-6 rounded-lg text-[10px] font-black flex items-center justify-center shrink-0 ml-2 ${r.resultado === "G" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : r.resultado === "P" ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-slate-800 text-slate-400"}`}
+							{[
+								{ team: match.teamHome, racha: espn.previaEstadisticas?.rachaHome },
+								{ team: match.teamAway, racha: espn.previaEstadisticas?.rachaAway },
+							].map(({ team, racha }) => (
+								<div key={team} className="bg-slate-900/40 border border-slate-900 p-5 rounded-3xl space-y-3">
+									<h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">
+										{t("matchDetail_recentMatches", { team })}
+									</h4>
+									<div className="space-y-2">
+										{Array.isArray(racha) ? (
+											racha.map((r, idx) => (
+												<div
+													key={idx}
+													className="flex justify-between items-center bg-slate-950/70 border border-slate-900 px-3 py-2.5 rounded-xl text-xs"
 												>
-													{r.resultado}
-												</span>
-											</div>
-										))
-									) : (
-										<p className="text-xs text-slate-600">
-											No hay datos disponibles
-										</p>
-									)}
+													<span className="text-slate-300 font-semibold truncate w-[110px] sm:w-[130px] text-left">
+														vs {r.oponente}
+													</span>
+													<span className="font-mono text-slate-400 font-bold text-center flex-1">
+														{r.score}
+													</span>
+													<span
+														className={`w-6 h-6 rounded-lg text-[10px] font-black flex items-center justify-center shrink-0 ml-2 ${r.resultado === "G" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : r.resultado === "P" ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-slate-800 text-slate-400"}`}
+													>
+														{r.resultado}
+													</span>
+												</div>
+											))
+										) : (
+											<p className="text-xs text-slate-600">{t("matchDetail_noData")}</p>
+										)}
+									</div>
 								</div>
-							</div>
-
-							<div className="bg-slate-900/40 border border-slate-900 p-5 rounded-3xl space-y-3">
-								<h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">
-									Últimos partidos de {match.teamAway}
-								</h4>
-								<div className="space-y-2">
-									{Array.isArray(espn.previaEstadisticas?.rachaAway) ? (
-										espn.previaEstadisticas.rachaAway.map((r, idx) => (
-											<div
-												key={idx}
-												className="flex justify-between items-center bg-slate-950/70 border border-slate-900 px-3 py-2.5 rounded-xl text-xs"
-											>
-												<span className="text-slate-300 font-semibold truncate w-[110px] sm:w-[130px] text-left">
-													vs {r.oponente}
-												</span>
-												<span className="font-mono text-slate-400 font-bold text-center flex-1">
-													{r.score}
-												</span>
-												<span
-													className={`w-6 h-6 rounded-lg text-[10px] font-black flex items-center justify-center shrink-0 ml-2 ${r.resultado === "G" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : r.resultado === "P" ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-slate-800 text-slate-400"}`}
-												>
-													{r.resultado}
-												</span>
-											</div>
-										))
-									) : (
-										<p className="text-xs text-slate-600">
-											No hay datos disponibles
-										</p>
-									)}
-								</div>
-							</div>
+							))}
 						</div>
 
-						{/* H2H Historial */}
+						{/* H2H */}
 						{Array.isArray(espn.previaEstadisticas?.historialH2H) &&
 							espn.previaEstadisticas.historialH2H.length > 0 && (
 								<div className="bg-slate-900/60 border border-slate-850 p-6 rounded-3xl shadow-xl space-y-3">
 									<h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">
-										Historial Frente a Frente (H2H)
+										{t("matchDetail_h2hTitle")}
 									</h4>
 									<div className="grid grid-cols-1 gap-2">
 										{espn.previaEstadisticas.historialH2H.map((h, idx) => (
@@ -552,14 +496,12 @@ export default function MatchDetailView({
 													</span>
 													{h.ganador === "Empate" ? (
 														<span className="text-[10px] text-slate-400 font-bold uppercase bg-slate-800/30 px-1.5 py-0.5 rounded">
-															Empate
+															{t("matchDetail_draw")}
 														</span>
 													) : (
 														<span className="text-[10px] text-amber-500 font-black uppercase bg-amber-500/5 px-1.5 py-0.5 rounded border border-amber-500/10">
-															Ganador:{" "}
-															<span className="text-white font-black">
-																{h.ganador}
-															</span>
+															{t("matchDetail_winner")}{" "}
+															<span className="text-white font-black">{h.ganador}</span>
 														</span>
 													)}
 												</div>
@@ -571,12 +513,12 @@ export default function MatchDetailView({
 					</div>
 				)}
 
-				{/* En vivo / Finalizado */}
+				{/* Live / Finished */}
 				{(match.status === "LIVE" || match.status === "FINISHED") && espn && (
 					<div className="space-y-6">
 						<div className="bg-slate-900/60 border border-slate-850 p-6 rounded-3xl shadow-xl space-y-4">
 							<h4 className="text-xs font-black text-slate-400 uppercase tracking-wider text-center">
-								Esquemas Tácticos Iniciales
+								{t("matchDetail_tacticsTitle")}
 							</h4>
 							<div className="flex justify-around items-center bg-slate-950/80 rounded-2xl border border-slate-900 p-4 font-mono text-center">
 								<div className="flex flex-col">
@@ -599,36 +541,35 @@ export default function MatchDetailView({
 							</div>
 						</div>
 
-						{Array.isArray(espn.eventosEnVivo) &&
-							espn.eventosEnVivo.length > 0 && (
-								<div className="bg-slate-900/60 border border-slate-850 p-6 rounded-3xl shadow-xl space-y-4">
-									<h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">
-										Línea de Tiempo del Partido
-									</h4>
-									<div className="relative border-l border-slate-800 ml-4 pl-6 space-y-5">
-										{espn.eventosEnVivo.map((evt, idx) => (
-											<div key={idx} className="relative flex flex-col gap-1">
+						{Array.isArray(espn.eventosEnVivo) && espn.eventosEnVivo.length > 0 && (
+							<div className="bg-slate-900/60 border border-slate-850 p-6 rounded-3xl shadow-xl space-y-4">
+								<h4 className="text-xs font-black text-slate-400 uppercase tracking-wider">
+									{t("matchDetail_timelineTitle")}
+								</h4>
+								<div className="relative border-l border-slate-800 ml-4 pl-6 space-y-5">
+									{espn.eventosEnVivo.map((evt, idx) => (
+										<div key={idx} className="relative flex flex-col gap-1">
+											<span
+												className={`absolute left-[-31px] top-0 w-3 h-3 rounded-full border-2 bg-slate-950 ${evt.tipo === "gol" ? "border-emerald-500" : "border-slate-700"}`}
+											/>
+											<div className="flex items-center gap-2">
 												<span
-													className={`absolute left-[-31px] top-0 w-3 h-3 rounded-full border-2 bg-slate-950 ${evt.tipo === "gol" ? "border-emerald-500" : "border-slate-700"}`}
-												/>
-												<div className="flex items-center gap-2">
-													<span
-														className={`px-1.5 py-0.5 rounded font-black text-[10px] uppercase leading-none ${evt.tipo === "gol" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-slate-900 text-slate-400"}`}
-													>
-														{evt.tiempo}
-													</span>
-													<span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
-														{evt.tipo.replace("-", " ")}
-													</span>
-												</div>
-												<p className="text-slate-300 text-sm leading-relaxed">
-													{evt.descripcion}
-												</p>
+													className={`px-1.5 py-0.5 rounded font-black text-[10px] uppercase leading-none ${evt.tipo === "gol" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-slate-900 text-slate-400"}`}
+												>
+													{evt.tiempo}
+												</span>
+												<span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+													{evt.tipo.replace("-", " ")}
+												</span>
 											</div>
-										))}
-									</div>
+											<p className="text-slate-300 text-sm leading-relaxed">
+												{evt.descripcion}
+											</p>
+										</div>
+									))}
 								</div>
-							)}
+							</div>
+						)}
 					</div>
 				)}
 			</main>

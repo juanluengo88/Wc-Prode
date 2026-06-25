@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { User, Group } from "../../lib/mockData";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface LeaderboardViewProps {
 	currentUser: User;
@@ -19,6 +20,7 @@ export default function LeaderboardView({
 	const [activeGroupId, setActiveGroupId] = useState<string>(
 		userGroups[0]?.gId || "",
 	);
+	const { t } = useLanguage();
 
 	const handleSelectGroup = (groupId: string) => {
 		setActiveGroupId(groupId);
@@ -27,12 +29,9 @@ export default function LeaderboardView({
 
 	const rankedUsers = [...users]
 		.sort((a, b) => b.totalPoints - a.totalPoints)
-		.map((user, index) => ({
-			...user,
-			rank: index + 1,
-		}));
+		.map((user, index) => ({ ...user, rank: index + 1 }));
 
-	const currentUserRanked = rankedUsers.find((u) => u.id === currentUser.uid); // ignora el tipo xd
+	const currentUserRanked = rankedUsers.find((u) => u.id === currentUser.uid);
 	const currentUserRank = currentUserRanked ? currentUserRanked.rank : "-";
 	const top1 = rankedUsers.find((u) => u.rank === 1);
 	const top2 = rankedUsers.find((u) => u.rank === 2);
@@ -41,31 +40,26 @@ export default function LeaderboardView({
 
 	return (
 		<div className="flex-1 bg-slate-950 text-slate-100 min-h-screen pb-16">
-			{/* Navbar Title */}
 			<header className="sticky top-0 z-40 backdrop-blur-md bg-slate-900/80 border-b border-slate-800 px-4 py-4 sm:px-8">
 				<div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 					<div>
 						<h2 className="text-lg font-extrabold text-white">
-							Tabla de Posiciones
+							{t("leaderboard_title")}
 						</h2>
-						<p className="text-xs text-slate-400">
-							Ranking competitivo por sesión
-						</p>
+						<p className="text-xs text-slate-400">{t("leaderboard_subtitle")}</p>
 					</div>
 					<div className="bg-slate-800/50 border border-slate-700/50 py-1.5 px-3 rounded-full text-xs font-semibold self-start sm:self-auto">
-						Tu Puesto en este grupo:{" "}
+						{t("leaderboard_yourRank")}{" "}
 						<span className="text-amber-400 font-bold">#{currentUserRank}</span>
 					</div>
 				</div>
 			</header>
 
-			{/* Main Container */}
 			<main className="max-w-4xl mx-auto px-4 py-8 sm:px-8 space-y-8">
-				{/* 🗂️ SELECTOR DE SESIONES INTERACTIVO */}
 				{userGroups.length > 0 && (
 					<div className="space-y-2">
 						<label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-							Seleccionar Grupo / Sesión
+							{t("leaderboard_selectGroup")}
 						</label>
 						<div className="flex flex-wrap gap-2 p-1.5 bg-slate-900/60 border border-slate-900 rounded-2xl">
 							{userGroups.map((group) => {
@@ -89,16 +83,13 @@ export default function LeaderboardView({
 					</div>
 				)}
 
-				{/* Si el grupo seleccionado no tiene usuarios cargados todavía */}
 				{rankedUsers.length === 0 ? (
 					<div className="text-center py-20 bg-slate-900/20 rounded-3xl border border-slate-900">
-						<p className="text-slate-400 font-medium">
-							No hay participantes registrados en esta sesión todavía.
-						</p>
+						<p className="text-slate-400 font-medium">{t("leaderboard_empty")}</p>
 					</div>
 				) : (
 					<>
-						{/* Podium Section */}
+						{/* Podium */}
 						<div className="relative pt-12 pb-6 px-4 rounded-3xl bg-gradient-to-b from-indigo-950/20 to-slate-900/40 border border-slate-850 flex items-end justify-center gap-2 sm:gap-6 min-h-[300px] overflow-hidden">
 							<div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-indigo-500/5 to-transparent blur-xl pointer-events-none" />
 
@@ -123,14 +114,14 @@ export default function LeaderboardView({
 										</span>
 									</div>
 									<span className="text-xs font-bold text-slate-200 truncate w-full text-center">
-										{top2.uid === currentUser.uid ? "Tú" : top2.displayName}
+										{top2.uid === currentUser.uid ? t("leaderboard_you") : top2.displayName}
 									</span>
 									<span className="text-[11px] font-black text-slate-400 mt-0.5">
 										{top2.totalPoints} pts
 									</span>
 									<div className="w-full bg-slate-900/80 border-t border-x border-slate-800 h-16 rounded-t-xl mt-3 flex items-center justify-center shadow-inner">
 										<span className="text-[10px] uppercase font-black tracking-widest text-slate-400">
-											Plata
+											{t("leaderboard_silver")}
 										</span>
 									</div>
 								</div>
@@ -158,14 +149,14 @@ export default function LeaderboardView({
 										</span>
 									</div>
 									<span className="text-sm font-black text-white truncate w-full text-center">
-										{top1.uid === currentUser.uid ? "Tú" : top1.displayName}
+										{top1.uid === currentUser.uid ? t("leaderboard_you") : top1.displayName}
 									</span>
 									<span className="text-xs font-black text-amber-400 mt-0.5">
 										{top1.totalPoints} pts
 									</span>
 									<div className="w-full bg-slate-900 border-t border-x border-amber-500/20 h-24 rounded-t-2xl mt-3 flex items-center justify-center shadow-lg">
 										<span className="text-xs uppercase font-black tracking-widest text-amber-400">
-											Oro
+											{t("leaderboard_gold")}
 										</span>
 									</div>
 								</div>
@@ -192,32 +183,31 @@ export default function LeaderboardView({
 										</span>
 									</div>
 									<span className="text-xs font-bold text-slate-200 truncate w-full text-center">
-										{top3.uid === currentUser.uid ? "Tú" : top3.displayName}
+										{top3.uid === currentUser.uid ? t("leaderboard_you") : top3.displayName}
 									</span>
 									<span className="text-[11px] font-black text-slate-400 mt-0.5">
 										{top3.totalPoints} pts
 									</span>
 									<div className="w-full bg-slate-900/80 border-t border-x border-slate-800 h-12 rounded-t-xl mt-3 flex items-center justify-center shadow-inner">
 										<span className="text-[10px] uppercase font-black tracking-widest text-amber-700">
-											Bronce
+											{t("leaderboard_bronze")}
 										</span>
 									</div>
 								</div>
 							)}
 						</div>
 
-						{/* Global Leaderboard Table */}
+						{/* Table */}
 						<div className="overflow-hidden rounded-2xl bg-slate-900/40 border border-slate-900">
 							<div className="p-4 border-b border-slate-900 bg-slate-900/20">
 								<h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
-									Resto de Participantes
+									{t("leaderboard_restTitle")}
 								</h3>
 							</div>
 
 							<div className="divide-y divide-slate-900/60 max-h-[400px] overflow-y-auto">
 								{tableUsers.map((item) => {
 									const isCurrentUser = item.uid === currentUser.uid;
-
 									return (
 										<div
 											key={item.uid}
@@ -241,9 +231,7 @@ export default function LeaderboardView({
 														src={item.photoURL}
 														alt={item.displayName}
 														className={`w-9 h-9 rounded-full object-cover border ${
-															isCurrentUser
-																? "border-amber-400"
-																: "border-slate-800"
+															isCurrentUser ? "border-amber-400" : "border-slate-800"
 														}`}
 													/>
 												) : (
@@ -257,7 +245,7 @@ export default function LeaderboardView({
 														{item.displayName}{" "}
 														{isCurrentUser && (
 															<span className="text-[10px] text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/20 ml-1.5 uppercase font-bold">
-																Tú
+																{t("leaderboard_you")}
 															</span>
 														)}
 													</span>

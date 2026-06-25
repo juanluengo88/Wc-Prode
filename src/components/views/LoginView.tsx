@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import {
@@ -10,6 +10,7 @@ import {
 	OAuthProvider,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useLanguage } from "@/context/LanguageContext";
 
 const googleProvider = new GoogleAuthProvider();
 const microsoftProvider = new OAuthProvider("microsoft.com");
@@ -21,6 +22,7 @@ export default function LoginView() {
 	const [displayName, setDisplayName] = useState("");
 	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const { t } = useLanguage();
 
 	const ensureUserDoc = async (
 		uid: string,
@@ -33,6 +35,23 @@ export default function LoginView() {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ uid, displayName, email, photoURL }),
 		});
+	};
+
+	const getErrorMessage = (err: unknown): string => {
+		if (typeof err === "object" && err !== null && "code" in err) {
+			const code = (err as { code: string }).code;
+			const map: Record<string, string> = {
+				"auth/user-not-found": t("login_errUserNotFound"),
+				"auth/wrong-password": t("login_errWrongPassword"),
+				"auth/email-already-in-use": t("login_errEmailInUse"),
+				"auth/weak-password": t("login_errWeakPassword"),
+				"auth/invalid-email": t("login_errInvalidEmail"),
+				"auth/popup-closed-by-user": t("login_errPopupClosed"),
+				"auth/invalid-credential": t("login_errInvalidCredential"),
+			};
+			return map[code] ?? t("login_errGeneric");
+		}
+		return t("login_errGeneric");
 	};
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -52,7 +71,6 @@ export default function LoginView() {
 			} else {
 				await signInWithEmailAndPassword(auth, email, password);
 			}
-			// onAuthStateChanged in useProdeApp handles the rest
 		} catch (err: unknown) {
 			setError(getErrorMessage(err));
 			setIsLoading(false);
@@ -66,7 +84,7 @@ export default function LoginView() {
 			const { user } = await signInWithPopup(auth, googleProvider);
 			await ensureUserDoc(
 				user.uid,
-				user.displayName ?? user.email?.split("@")[0] ?? "Usuario",
+				user.displayName ?? user.email?.split("@")[0] ?? t("nav_defaultUser"),
 				user.email ?? "",
 				user.photoURL ?? undefined,
 			);
@@ -83,7 +101,7 @@ export default function LoginView() {
 			const { user } = await signInWithPopup(auth, microsoftProvider);
 			await ensureUserDoc(
 				user.uid,
-				user.displayName ?? user.email?.split("@")[0] ?? "Usuario",
+				user.displayName ?? user.email?.split("@")[0] ?? t("nav_defaultUser"),
 				user.email ?? "",
 				user.photoURL ?? undefined,
 			);
@@ -118,10 +136,10 @@ export default function LoginView() {
 						</svg>
 					</div>
 					<h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
-						MUNDIAL PRODE
+						{t("appTitle")}
 					</h1>
 					<p className="text-sm text-slate-400 mt-2">
-						Demuestra tus conocimientos y compite con amigos
+						{t("login_subtitle")}
 					</p>
 				</div>
 
@@ -135,7 +153,7 @@ export default function LoginView() {
 							setError("");
 						}}
 					>
-						Iniciar Sesión
+						{t("login_tabLogin")}
 					</button>
 					<button
 						type="button"
@@ -145,7 +163,7 @@ export default function LoginView() {
 							setError("");
 						}}
 					>
-						Crear Cuenta
+						{t("login_tabSignUp")}
 					</button>
 				</div>
 
@@ -159,13 +177,13 @@ export default function LoginView() {
 					{isSignUp && (
 						<div>
 							<label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-								Nombre Completo
+								{t("login_labelName")}
 							</label>
 							<input
 								type="text"
 								value={displayName}
 								onChange={(e) => setDisplayName(e.target.value)}
-								placeholder="Nombre y Apellido"
+								placeholder={t("login_placeholderName")}
 								className="w-full px-4 py-3 rounded-xl bg-slate-950/50 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all text-sm"
 								required
 							/>
@@ -174,13 +192,13 @@ export default function LoginView() {
 
 					<div>
 						<label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-							Correo Electrónico
+							{t("login_labelEmail")}
 						</label>
 						<input
 							type="email"
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
-							placeholder="correo@ejemplo.com"
+							placeholder={t("login_placeholderEmail")}
 							className="w-full px-4 py-3 rounded-xl bg-slate-950/50 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all text-sm"
 							required
 						/>
@@ -188,7 +206,7 @@ export default function LoginView() {
 
 					<div>
 						<label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-							Contraseña
+							{t("login_labelPassword")}
 						</label>
 						<input
 							type="password"
@@ -227,10 +245,10 @@ export default function LoginView() {
 										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 									/>
 								</svg>
-								<span>Procesando...</span>
+								<span>{t("login_btnLoading")}</span>
 							</>
 						) : (
-							<span>{isSignUp ? "Crear Cuenta" : "Entrar"}</span>
+							<span>{isSignUp ? t("login_btnSignUp") : t("login_btnSubmit")}</span>
 						)}
 					</button>
 				</form>
@@ -240,7 +258,7 @@ export default function LoginView() {
 						<div className="w-full border-t border-slate-800" />
 					</div>
 					<span className="relative px-3 text-xs uppercase tracking-wider text-slate-500 bg-slate-900">
-						o continúa con
+						{t("login_orContinueWith")}
 					</span>
 				</div>
 
@@ -274,7 +292,7 @@ export default function LoginView() {
 							/>
 						</g>
 					</svg>
-					<span>Acceder con Google</span>
+					<span>{t("login_btnGoogle")}</span>
 				</button>
 
 				<button
@@ -293,26 +311,9 @@ export default function LoginView() {
 						<rect x="1" y="12" width="10" height="10" fill="#00A4EF" />
 						<rect x="12" y="12" width="10" height="10" fill="#FFB900" />
 					</svg>
-					<span>Acceder con Microsoft</span>
+					<span>{t("login_btnMicrosoft")}</span>
 				</button>
 			</div>
 		</div>
 	);
-}
-
-function getErrorMessage(err: unknown): string {
-	if (typeof err === "object" && err !== null && "code" in err) {
-		const code = (err as { code: string }).code;
-		const messages: Record<string, string> = {
-			"auth/user-not-found": "No existe una cuenta con ese email.",
-			"auth/wrong-password": "Contraseña incorrecta.",
-			"auth/email-already-in-use": "Ya existe una cuenta con ese email.",
-			"auth/weak-password": "La contraseña debe tener al menos 6 caracteres.",
-			"auth/invalid-email": "El formato del email no es válido.",
-			"auth/popup-closed-by-user": "Se cerró la ventana de Google.",
-			"auth/invalid-credential": "Email o contraseña incorrectos.",
-		};
-		return messages[code] ?? "Ocurrió un error. Intentá de nuevo.";
-	}
-	return "Ocurrió un error. Intentá de nuevo.";
 }

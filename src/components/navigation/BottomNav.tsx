@@ -3,16 +3,17 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function BottomNav() {
 	const pathname = usePathname();
+	const { t } = useLanguage();
 
-	// Helper to determine active state styling
 	const isActive = (path: string) => pathname === path;
 
 	return (
 		<nav className="sticky bottom-0 z-50 backdrop-blur-lg bg-slate-900/85 border-t border-slate-850 py-2.5 px-4 flex items-center justify-around shadow-[0_-5px_20px_rgba(0,0,0,0.4)]">
-			{/* Option 1: Fixture */}
+			{/* Fixture */}
 			<Link
 				href="/fixture"
 				className={`flex flex-col items-center gap-1 group transition-all ${
@@ -36,11 +37,11 @@ export default function BottomNav() {
 					/>
 				</svg>
 				<span className="text-[9px] font-bold uppercase tracking-wider">
-					Fixture
+					{t("bottomNav_fixture")}
 				</span>
 			</Link>
 
-			{/* Option 2: My Predictions */}
+			{/* My Predictions */}
 			<Link
 				href="/predictions"
 				className={`flex flex-col items-center gap-1 group transition-all ${
@@ -64,11 +65,11 @@ export default function BottomNav() {
 					/>
 				</svg>
 				<span className="text-[9px] font-bold uppercase tracking-wider">
-					Mis Pronósticos
+					{t("bottomNav_predictions")}
 				</span>
 			</Link>
 
-			{/* Option 3: Leaderboard */}
+			{/* Leaderboard */}
 			<Link
 				href="/leaderboard"
 				className={`flex flex-col items-center gap-1 group transition-all ${
@@ -92,7 +93,7 @@ export default function BottomNav() {
 					/>
 				</svg>
 				<span className="text-[9px] font-bold uppercase tracking-wider">
-					Posiciones
+					{t("bottomNav_leaderboard")}
 				</span>
 			</Link>
 		</nav>
