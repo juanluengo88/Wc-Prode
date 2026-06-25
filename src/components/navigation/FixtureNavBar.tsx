@@ -1,37 +1,39 @@
 // components/FixtureNavBar.tsx
 "use client";
 
-import React, { useState, useMemo, ReactNode } from "react";
+import React, { useMemo, ReactNode } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Match } from "@/lib/mockData";
 import { useLanguage } from "@/context/LanguageContext";
 
-type FilterType = "ALL" | "PENDING" | "LIVE" | "FINISHED";
+type TabType = "todos" | "pendientes" | "live" | "finalizados";
 
 interface FixtureNavBarProps {
   matches: Match[];
-  onFilteredMatchesChange: (filtered: Match[]) => void;
+  search: string;
+  selectedGroup: string;
+  selectedStage: string;
+  filteredCount: number;
+  onSearchChange: (v: string) => void;
+  onGroupChange: (v: string) => void;
+  onStageChange: (v: string) => void;
 }
 
-function hasTeams(match: Match): boolean {
-  return !!(match.teamHome && match.teamAway);
-}
-
-function matchesSearch(match: Match, newSearch: string): boolean {
-  if (newSearch.trim() === "") return true;
-  if (!hasTeams(match)) return false;
-  return (
-    match.teamHome.toLowerCase().includes(newSearch.toLowerCase()) ||
-    match.teamAway.toLowerCase().includes(newSearch.toLowerCase())
-  );
-}
-
-export default function FixtureNavBar({ matches, onFilteredMatchesChange }: FixtureNavBarProps) {
-  const [filter, setFilter] = useState<FilterType>("PENDING");
-  const [search, setSearch] = useState("");
-  const [selectedGroup, setSelectedGroup] = useState<string>("ALL");
-  const [selectedStage, setSelectedStage] = useState<string>("ALL");
-  const [filteredCount, setFilteredCount] = useState<Number>(matches.length);
+export default function FixtureNavBar({
+  matches,
+  search,
+  selectedGroup,
+  selectedStage,
+  filteredCount,
+  onSearchChange,
+  onGroupChange,
+  onStageChange,
+}: FixtureNavBarProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useLanguage();
+
+  const tab = (searchParams.get("tab") as TabType) || "todos";
 
   const { groups, stages } = useMemo(() => {
     const all = Array.from(new Set(matches.map((m) => m.groupOrStage))).sort();
@@ -41,76 +43,28 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
     };
   }, [matches]);
 
-  const applyFilters = (
-    newFilter: FilterType = filter,
-    newSearch: string = search,
-    newGroup: string = selectedGroup,
-    newStage: string = selectedStage,
-  ) => {
-    const filtered = matches.filter((match) => {
-      const matchesStatus =
-        newFilter === "ALL" ? true :
-        newFilter === "PENDING" ? match.status === "SCHEDULED" :
-        newFilter === "LIVE" ? match.status === "LIVE" :
-        match.status === "FINISHED";
-
-      const matchesGroup = newGroup === "ALL" ? true : match.groupOrStage === newGroup;
-      const matchesStage = newStage === "ALL" ? true : match.groupOrStage === newStage;
-
-      return matchesStatus && matchesGroup && matchesStage && matchesSearch(match, newSearch);
-    });
-
-    setFilteredCount(filtered.length);
-    onFilteredMatchesChange(filtered);
-  };
-
-  const handleFilterChange = (newFilter: FilterType) => {
-    setFilter(newFilter);
-    applyFilters(newFilter);
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const searchValue = e.target.value || "";
-    setSearch(searchValue);
-    applyFilters(filter, searchValue);
-  };
-
-  const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setSelectedGroup(val);
-    setSelectedStage("ALL");
-    applyFilters(filter, search, val, "ALL");
-  };
-
-  const handleStageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setSelectedStage(val);
-    setSelectedGroup("ALL");
-    applyFilters(filter, search, "ALL", val);
-  };
-
-  const filterLabels: Record<FilterType, string> = {
-    ALL: t("fixtureNav_all"),
-    PENDING: t("fixtureNav_pending"),
-    LIVE: t("fixtureNav_live"),
-    FINISHED: t("fixtureNav_finished"),
-  };
+  const tabs: { key: TabType; label: string }[] = [
+    { key: "todos", label: t("fixtureNav_all") },
+    { key: "pendientes", label: t("fixtureNav_pending") },
+    { key: "live", label: t("fixtureNav_live") },
+    { key: "finalizados", label: t("fixtureNav_finished") },
+  ];
 
   return (
     <div className="flex flex-col gap-4 border-b border-slate-800 pb-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
-          {(["ALL", "PENDING", "LIVE", "FINISHED"] as const).map((tab) => (
+          {tabs.map(({ key, label }) => (
             <button
-              key={tab}
-              onClick={() => handleFilterChange(tab)}
+              key={key}
+              onClick={() => router.push(key === "todos" ? "/fixture" : `/fixture?tab=${key}`)}
               className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
-                filter === tab
+                tab === key
                   ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/10"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              {filterLabels[tab]}
+              {label}
             </button>
           ))}
         </div>
@@ -130,13 +84,13 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
           <input
             type="text"
             value={search}
-            onChange={handleSearchChange}
+            onChange={(e) => onSearchChange(e.target.value)}
             placeholder={t("fixtureNav_searchPlaceholder")}
             className="w-full bg-slate-900/60 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/60 transition-all"
           />
           {search && (
             <button
-              onClick={() => { setSearch(""); applyFilters(filter, ""); }}
+              onClick={() => onSearchChange("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -151,7 +105,7 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
           <div className="relative">
             <select
               value={selectedGroup}
-              onChange={handleGroupChange}
+              onChange={(e) => onGroupChange(e.target.value)}
               className={`appearance-none bg-slate-900/60 border rounded-xl px-4 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/60 transition-all cursor-pointer ${
                 selectedGroup !== "ALL"
                   ? "border-amber-500/60 text-amber-400"
@@ -175,7 +129,7 @@ export default function FixtureNavBar({ matches, onFilteredMatchesChange }: Fixt
           <div className="relative">
             <select
               value={selectedStage}
-              onChange={handleStageChange}
+              onChange={(e) => onStageChange(e.target.value)}
               className={`appearance-none bg-slate-900/60 border rounded-xl px-4 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/60 transition-all cursor-pointer ${
                 selectedStage !== "ALL"
                   ? "border-amber-500/60 text-amber-400"

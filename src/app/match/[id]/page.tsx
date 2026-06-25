@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useProde } from "../../../context/ProdeContext";
 import MatchDetailView from "../../../components/views/MatchDetailView";
 
@@ -16,7 +16,9 @@ export interface OtherPrediction {
 export default function MatchDetailPage() {
 	const router = useRouter();
 	const params = useParams();
+	const searchParams = useSearchParams();
 	const matchId = params.id as string;
+	const fromUrl = searchParams.get("from") ? decodeURIComponent(searchParams.get("from")!) : "/fixture";
 
 	const {
 		isLoggedIn,
@@ -50,7 +52,7 @@ export default function MatchDetailPage() {
 				teams={teams}
 				prediction={prediction}
 				onSavePrediction={handleSavePrediction}
-				onBack={() => router.back()}
+				onBack={() => router.push(fromUrl)}
 			/>
 		</div>
 	);
