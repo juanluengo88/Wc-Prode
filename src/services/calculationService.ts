@@ -19,12 +19,12 @@ export function assertPrediction(prediction: Prediction, match: Match): number {
     return 3;
   }
 
-  const tendenciaReal = realHome > realAway ? 1 : realHome < realAway ? 2 : 0;
-  const tendenciaPred = predHome > predAway ? 1 : predHome < predAway ? 2 : 0;
+  // Use winner field from API if available, otherwise derive from score
+  const winner = match.winner ?? (
+    realHome > realAway ? "HOME_TEAM" : realAway > realHome ? "AWAY_TEAM" : "DRAW"
+  );
+  const predictedWinner =
+    predHome > predAway ? "HOME_TEAM" : predAway > predHome ? "AWAY_TEAM" : "DRAW";
 
-  if (tendenciaReal === tendenciaPred) {
-    return 1;
-  }
-
-  return 0;
+  return winner === predictedWinner ? 1 : 0;
 }

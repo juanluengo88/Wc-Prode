@@ -9,7 +9,8 @@ if (!getApps().length) {
 			// The private key env var uses literal \n — replace them with actual newlines.
 			privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
 		}),
+		
 	});
 }
 
-export const db = getFirestore();
+export const db = getFirestore("devtest");

@@ -10,6 +10,14 @@ export interface Match {
 	scoreAway: number | null;
 	groupOrStage: string;
 	espnMatchId?: string;
+	winner: string | null;
+	scoreDuration: string | null;
+	scoreRegularHome: number | null;
+	scoreRegularAway: number | null;
+	scoreExtraHome: number | null;
+	scoreExtraAway: number | null;
+	scorePenaltiesHome: number | null;
+	scorePenaltiesAway: number | null;
 }
 
 export interface Prediction {

@@ -18,7 +18,11 @@ export interface ApiMatch {
 	awayTeam: ApiTeam;
 	score: {
 		winner: string | null;
+		duration: string | null;
 		fullTime: { home: number | null; away: number | null };
+		regularTime: { home: number | null; away: number | null } | null;
+		extraTime: { home: number | null; away: number | null } | null;
+		penalties: { home: number | null; away: number | null } | null;
 	};
 }
 
@@ -41,6 +45,18 @@ export interface ApiMatchesResponse {
 	matches: ApiMatch[];
 }
 
+export async function fetchSingleMatch(matchId: string, token: string): Promise<ApiMatch> {
+	const res = await fetch(`${BASE_URL}/matches/${matchId}`, {
+		headers: { "X-Auth-Token": token },
+	});
+
+	if (!res.ok) {
+		throw new Error(`football-data.org error ${res.status}: ${await res.text()}`);
+	}
+
+	return res.json();
+}
+
 export async function fetchWCMatches(token: string): Promise<ApiMatch[]> {
 	const res = await fetch(`${BASE_URL}/competitions/WC/matches`, {
 		headers: { "X-Auth-Token": token },
@@ -56,6 +72,7 @@ export async function fetchWCMatches(token: string): Promise<ApiMatch[]> {
 	return data.matches;
 }
 
+
 export async function fetchTeamData(
 	teamId: number,
 	token: string,
@@ -68,9 +85,9 @@ export async function fetchTeamData(
 		});
 		teamDataJson = await teamData.json();
 		teamDataJson = {
-			name: teamDataJson.name,
-			coach: teamDataJson.coach.name,
-			squad: teamDataJson.squad,
+			name: teamDataJson.name ?? null,
+			coach: teamDataJson.coach?.name ?? null,
+			squad: teamDataJson.squad ?? [],
 		};
 	} catch (error) {
 		if (teamData && teamData.status === 429) {

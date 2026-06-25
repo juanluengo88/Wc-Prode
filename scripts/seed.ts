@@ -58,7 +58,7 @@ async function main() {
 			}),
 		});
 	}
-	const db = getFirestore();
+	const db = getFirestore("devtest");
 
 	// ─── Fetch from API ─────────────────────────────────────────────────────────
 	console.log("⚽  Fetching WC matches from football-data.org...");
@@ -81,11 +81,18 @@ async function main() {
 			scoreHome: match.score.fullTime.home,
 			scoreAway: match.score.fullTime.away,
 			groupOrStage: mapGroupOrStage(match),
+			scoreDuration: match.score.duration ?? null,
+			scoreRegularHome: match.score.regularTime?.home ?? null,
+			scoreRegularAway: match.score.regularTime?.away ?? null,
+			scoreExtraHome: match.score.extraTime?.home ?? null,
+			scoreExtraAway: match.score.extraTime?.away ?? null,
+			scorePenaltiesHome: match.score.penalties?.home ?? null,
+			scorePenaltiesAway: match.score.penalties?.away ?? null,
 		});
 	}
 
 	const teams = new Set<number>(
-		matches.flatMap((m) => [m.homeTeam.id, m.awayTeam.id]),
+		matches.flatMap((m) => [m.homeTeam.id, m.awayTeam.id]).filter((id) => id != null),
 	);
 	for (const teamId of teams) {
 		const teamData = await processTeam(teamId, token);

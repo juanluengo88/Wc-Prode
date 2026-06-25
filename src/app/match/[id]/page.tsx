@@ -5,6 +5,14 @@ import { useRouter, useParams } from "next/navigation";
 import { useProde } from "../../../context/ProdeContext";
 import MatchDetailView from "../../../components/views/MatchDetailView";
 
+export interface OtherPrediction {
+    userId: string;
+    displayName: string;
+    predictHome: number;
+    predictAway: number;
+    photoURL?: string;
+}
+
 export default function MatchDetailPage() {
 	const router = useRouter();
 	const params = useParams();
@@ -35,7 +43,6 @@ export default function MatchDetailPage() {
 		router.replace("/fixture");
 		return null;
 	}
-
 	return (
 		<div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
 			<MatchDetailView
