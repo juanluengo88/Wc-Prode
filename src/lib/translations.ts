@@ -39,6 +39,8 @@ const translations = {
     login_errInvalidEmail: "El formato del email no es válido.",
     login_errPopupClosed: "Se cerró la ventana de Google.",
     login_errInvalidCredential: "Email o contraseña incorrectos.",
+    login_errMicrosoftTenantNotSet:
+      "El inicio de sesión con Microsoft no está disponible: falta configurar el tenant de la organización.",
     login_errGeneric: "Ocurrió un error. Intentá de nuevo.",
 
     // ProfileView
@@ -272,6 +274,8 @@ const translations = {
     login_errInvalidEmail: "Invalid email format.",
     login_errPopupClosed: "Google sign-in window was closed.",
     login_errInvalidCredential: "Incorrect email or password.",
+    login_errMicrosoftTenantNotSet:
+      "Microsoft sign-in is unavailable: the organisation tenant is not configured.",
     login_errGeneric: "An error occurred. Please try again.",
 
     // ProfileView
