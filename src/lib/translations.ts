@@ -231,6 +231,10 @@ const translations = {
 		banner_partialPoints: "1 punto",
 		banner_exactLabel: "Exacto",
 		banner_partialLabel: "Parcial",
+		banner_standings_badge: "NUEVA FUNCIÓN",
+		banner_standings_title: "¡Ya podés ver los Standings de la Fase de Grupos!",
+		banner_standings_desc: "Seguí en tiempo real las posiciones de cada grupo del Mundial. Descubrí quiénes están clasificando y quiénes luchan por un lugar.",
+		banner_standings_btn: "Ver Standings",
 
 		// AdminConsoleView
 		admin_tabUsers: "Participantes",
@@ -480,6 +484,10 @@ const translations = {
 		banner_partialPoints: "1 point",
 		banner_exactLabel: "Exact",
 		banner_partialLabel: "Partial",
+		banner_standings_badge: "NEW FEATURE",
+		banner_standings_title: "Group Stage Standings are now live!",
+		banner_standings_desc: "Follow each group's standings in real time. See who's advancing and who's fighting for a spot.",
+		banner_standings_btn: "View Standings",
 
 		// AdminConsoleView
 		admin_tabUsers: "Participants",
