@@ -109,6 +109,16 @@ export async function PUT(request: Request) {
       );
     }
 
+    // Sync standings whenever at least one match finished
+    if (toCalculatePoints.length > 0) {
+      fetch(`${APP_URL}/api/cron/sync-standings`, {
+        method: "PUT",
+        cache: "no-store",
+      }).catch((err) =>
+        console.error(`[Cron Error] sync-standings failed:`, err),
+      );
+    }
+
     return NextResponse.json({
       success: true,
       message: `Sync completed. ${updatedCount} matches updated, ${toCalculatePoints.length} finished.`,
