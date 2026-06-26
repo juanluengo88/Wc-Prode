@@ -58,7 +58,7 @@ async function main() {
 			}),
 		});
 	}
-	const db = getFirestore("devtest");
+	const db = getFirestore("prod");
 
 	// ─── Fetch from API ─────────────────────────────────────────────────────────
 	console.log("⚽  Fetching WC matches from football-data.org...");
@@ -92,7 +92,9 @@ async function main() {
 	}
 
 	const teams = new Set<number>(
-		matches.flatMap((m) => [m.homeTeam.id, m.awayTeam.id]).filter((id) => id != null),
+		matches
+			.flatMap((m) => [m.homeTeam.id, m.awayTeam.id])
+			.filter((id) => id != null),
 	);
 	for (const teamId of teams) {
 		const teamData = await processTeam(teamId, token);
