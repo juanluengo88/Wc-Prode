@@ -97,6 +97,16 @@ export default function LoginView() {
 	const handleMicrosoftLogin = async () => {
 		setError("");
 		setIsLoading(true);
+
+		const tenantId = process.env.NEXT_PUBLIC_MICROSOFT_TENANT_ID;
+		if (!tenantId) {
+			setError(t("login_errMicrosoftTenantNotSet"));
+			setIsLoading(false);
+			return;
+		}
+
+		microsoftProvider.setCustomParameters({ tenant: tenantId });
+
 		try {
 			const { user } = await signInWithPopup(auth, microsoftProvider);
 			await ensureUserDoc(
