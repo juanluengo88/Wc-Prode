@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Lang, TranslationKey, createTranslator } from "../lib/translations";
+import { Lang, TranslationKey, LANG_LOCALE, createTranslator } from "../lib/translations";
 
 const STORAGE_KEY = "prode-lang";
 
@@ -13,6 +13,7 @@ function detectLanguage(): Lang {
 
 interface LanguageContextType {
   lang: Lang;
+  locale: string;
   setLang: (lang: Lang) => void;
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }
@@ -32,9 +33,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = createTranslator(lang);
+  const locale = LANG_LOCALE[lang];
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
+    <LanguageContext.Provider value={{ lang, locale, setLang, t }}>
       {children}
     </LanguageContext.Provider>
   );

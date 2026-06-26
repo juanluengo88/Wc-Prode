@@ -41,17 +41,17 @@ export default function MatchCard({
 	onSave,
 	getPointsBadgeColor,
 }: MatchCardProps) {
-	const { t, lang } = useLanguage();
+	const { t, lang, locale } = useLanguage();
 
 	const dateObj = new Date(match.dateTime);
 	const formattedDate = dateObj
-		.toLocaleDateString("es-ES", {
+		.toLocaleDateString(locale, {
 			weekday: "short",
 			day: "numeric",
 			month: "short",
 		})
 		.replace(".", "");
-	const formattedTime = dateObj.toLocaleTimeString("es-ES", {
+	const formattedTime = dateObj.toLocaleTimeString(locale, {
 		hour: "2-digit",
 		minute: "2-digit",
 	});

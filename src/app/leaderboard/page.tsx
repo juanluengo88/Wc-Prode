@@ -7,6 +7,7 @@ import TopNavbar from "../../components/navigation/TopNavbar";
 import BottomNav from "../../components/navigation/BottomNav";
 import LeaderboardView from "../../components/views/LeaderboardView";
 import { Group, User } from "../../lib/mockData"; // Asegúrate de importar tus interfaces de tipo
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function LeaderboardPage() {
 	const router = useRouter();
@@ -16,6 +17,7 @@ export default function LeaderboardPage() {
 		currentUser,
 		users: globalUsers,
 	} = useProde();
+	const { t } = useLanguage();
 	const [userGroups, setUserGroups] = useState<Group[]>([]);
 	const [filteredUsers, setFilteredUsers] = useState<User[]>(globalUsers);
 	const [isLoadingGroups, setIsLoadingGroups] = useState<boolean>(true);
@@ -82,7 +84,7 @@ export default function LeaderboardPage() {
 	if (isAuthLoading || !isLoggedIn || !currentUser || isLoadingGroups) {
 		return (
 			<div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400 text-xs">
-				Cargando sesiones y clasificaciones...
+				{t("leaderboard_loading")}
 			</div>
 		);
 	}

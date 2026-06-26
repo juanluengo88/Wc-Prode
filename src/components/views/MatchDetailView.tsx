@@ -36,7 +36,7 @@ export default function MatchDetailView({
 	onBack,
 }: MatchDetailViewProps) {
 	const router = useRouter();
-	const { t, lang } = useLanguage();
+	const { t, lang, locale } = useLanguage();
 	const [homeScore, setHomeScore] = useState(
 		prediction?.predictHome.toString() ?? "0",
 	);
@@ -197,7 +197,7 @@ export default function MatchDetailView({
 							{timeLeftStr}
 						</span>
 						<span className="block text-xs text-slate-500 font-semibold uppercase tracking-wider mt-3">
-							{new Date(match.dateTime).toLocaleDateString("es-ES", {
+							{new Date(match.dateTime).toLocaleDateString(locale, {
 								weekday: "long",
 								year: "numeric",
 								month: "long",

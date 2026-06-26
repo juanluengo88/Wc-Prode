@@ -1,5 +1,10 @@
 export type Lang = "es" | "en";
 
+export const LANG_LOCALE: Record<Lang, string> = {
+  es: "es-ES",
+  en: "en-US",
+};
+
 const translations = {
 	es: {
 		// App global
@@ -131,6 +136,7 @@ const translations = {
 		leaderboard_bronze: "Bronce",
 		leaderboard_you: "Tú",
 		leaderboard_restTitle: "Resto de Participantes",
+		leaderboard_loading: "Cargando sesiones y clasificaciones...",
 
 		// MatchDetailView
 		matchDetail_title: "Detalle de Partido",
@@ -391,6 +397,7 @@ const translations = {
 		leaderboard_bronze: "Bronze",
 		leaderboard_you: "You",
 		leaderboard_restTitle: "Other Participants",
+		leaderboard_loading: "Loading sessions and standings...",
 
 		// MatchDetailView
 		matchDetail_title: "Match Detail",
