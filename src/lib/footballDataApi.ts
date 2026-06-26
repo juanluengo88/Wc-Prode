@@ -1,7 +1,7 @@
-const BASE_URL = "https://api.football-data.org/v4";
+const BASE_URL ="https://api.football-data.org/v4";
 
 export interface ApiTeam {
-	id: number;
+	id: number | null;
 	name: string;
 	tla: string;
 	crest: string;
