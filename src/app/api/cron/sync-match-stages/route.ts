@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
-import { fetchSingleMatch, mapStatus, mapGroupOrStage } from "@/lib/footballDataApi";
-import { sleep } from "@/lib/utils";
+import { fetchWCMatches, mapStatus, mapGroupOrStage } from "@/lib/footballDataApi";
 
 /**
  * PUT /api/cron/sync-match-stages
  *
- * For each SCHEDULED match with null teamHome or teamAway, calls the individual
- * match endpoint (which returns full team data unlike the competition endpoint).
- * Updates teamHome/teamAway only for the side that is already resolved in the API.
- * Runs once per day via Vercel Cron.
+ * Fetches all WC matches in a single API call, then updates any Firestore
+ * SCHEDULED match that has a null/empty teamHome or teamAway with the resolved
+ * team data from the API. Runs once per day via Vercel Cron.
  */
 export async function PUT() {
   try {
@@ -27,45 +25,56 @@ export async function PUT() {
       .where("status", "==", "SCHEDULED")
       .get();
 
-    const tbdIds = snap.docs
-      .filter((d) => d.data().teamHome == null || d.data().teamAway == null)
-      .map((d) => d.id);
+    const tbdDocs = snap.docs.filter(
+      (d) => !d.data().teamHome || !d.data().teamAway,
+    );
 
-    if (tbdIds.length === 0) {
+    if (tbdDocs.length === 0) {
       return NextResponse.json({ success: true, message: "No TBD matches to update" });
     }
 
+    const tbdIdSet = new Set(tbdDocs.map((d) => d.id));
+
+    // Single API call to get all WC matches
+    const apiMatches = await fetchWCMatches(token);
+
+    // Index by ID for fast lookup
+    const apiById = new Map(apiMatches.map((m) => [String(m.id), m]));
+
     const batch = db.batch();
     let updatedCount = 0;
+    const skipped: string[] = [];
 
-    for (const id of tbdIds) {
-      try {
-        const match = await fetchSingleMatch(id, token);
-        await sleep(600); // 10 req/min limit → 6s between calls
-
-        const homeResolved = match.homeTeam.id !== null && match.homeTeam.name !== null;
-        const awayResolved = match.awayTeam.id !== null && match.awayTeam.name !== null;
-        if (!homeResolved && !awayResolved) continue;
-
-        const update: Record<string, unknown> = {
-          groupOrStage: mapGroupOrStage(match),
-          status: mapStatus(match.status),
-        };
-        if (homeResolved) {
-          update.teamHome = match.homeTeam.name;
-          update.teamHomeFlag = match.homeTeam.crest;
-        }
-        if (awayResolved) {
-          update.teamAway = match.awayTeam.name;
-          update.teamAwayFlag = match.awayTeam.crest;
-        }
-
-        batch.update(db.collection("matches").doc(id), update);
-        updatedCount++;
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error(`[sync-match-stages] Error match ${id}:`, msg);
+    for (const id of tbdIdSet) {
+      const match = apiById.get(id);
+      if (!match) {
+        skipped.push(`${id}: not found in API`);
+        continue;
       }
+
+      const homeResolved = Boolean(match.homeTeam.id && match.homeTeam.name);
+      const awayResolved = Boolean(match.awayTeam.id && match.awayTeam.name);
+
+      if (!homeResolved && !awayResolved) {
+        skipped.push(`${id} (home: ${match.homeTeam.name || "TBD"}, away: ${match.awayTeam.name || "TBD"})`);
+        continue;
+      }
+
+      const update: Record<string, unknown> = {
+        groupOrStage: mapGroupOrStage(match),
+        status: mapStatus(match.status),
+      };
+      if (homeResolved) {
+        update.teamHome = match.homeTeam.name;
+        update.teamHomeFlag = match.homeTeam.crest;
+      }
+      if (awayResolved) {
+        update.teamAway = match.awayTeam.name;
+        update.teamAwayFlag = match.awayTeam.crest;
+      }
+
+      batch.update(db.collection("matches").doc(id), update);
+      updatedCount++;
     }
 
     if (updatedCount > 0) {
@@ -74,7 +83,8 @@ export async function PUT() {
 
     return NextResponse.json({
       success: true,
-      message: `Checked ${tbdIds.length} TBD matches, updated ${updatedCount}.`,
+      message: `Checked ${tbdDocs.length} TBD matches, updated ${updatedCount}.`,
+      skipped,
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);

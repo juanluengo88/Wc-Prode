@@ -31,12 +31,24 @@ export async function PUT(request: Request) {
     const matchDocs = [...liveSnap.docs, ...scheduledSnap.docs];
 
     if (matchDocs.length === 0) {
-      return NextResponse.json({ success: true, message: "No active matches to sync" });
+      return NextResponse.json({
+        success: true,
+        message: "No active matches to sync",
+        debug: {
+          liveCount: liveSnap.size,
+          scheduledWithinHourCount: scheduledSnap.size,
+          baseUrl: process.env.FOOTBALL_DATA_BASE_URL ?? "https://api.football-data.org/v4 (default)",
+          now: now.toISOString(),
+          oneHourFromNow: oneHourFromNow.toISOString(),
+        },
+      });
     }
 
     const batch = db.batch();
     let updatedCount = 0;
     const toCalculatePoints: string[] = [];
+    const syncErrors: string[] = [];
+    const skippedNoChange: string[] = [];
 
     for (const doc of matchDocs) {
       const stored = doc.data();
@@ -50,17 +62,19 @@ export async function PUT(request: Request) {
         const scoreChanged =
           newHomeScore !== stored.scoreHome || newAwayScore !== stored.scoreAway;
         const statusChanged = newStatus !== stored.status;
+        const durationChanged = duration !== stored.scoreDuration;
+        const penaltiesChanged =
+          (apiMatch.score?.penalties?.home ?? null) !== stored.scorePenaltiesHome ||
+          (apiMatch.score?.penalties?.away ?? null) !== stored.scorePenaltiesAway;
 
-        if (!scoreChanged && !statusChanged) continue;
+        if (!scoreChanged && !statusChanged && !durationChanged && !penaltiesChanged) {
+          skippedNoChange.push(doc.id);
+          continue;
+        }
 
         const matchRef = db.collection("matches").doc(doc.id);
 
         if (newStatus === "FINISHED") {
-          // Skip ET/penalties — to be handled later
-          if (duration === "EXTRA_TIME" || duration === "PENALTY_SHOOTOUT") {
-            continue;
-          }
-
           batch.update(matchRef, {
             scoreHome: newHomeScore,
             scoreAway: newAwayScore,
@@ -86,12 +100,22 @@ export async function PUT(request: Request) {
             update.scoreHome = newHomeScore;
             update.scoreAway = newAwayScore;
           }
+          if (duration) {
+            update.scoreDuration = duration;
+            update.scoreRegularHome = apiMatch.score?.regularTime?.home ?? null;
+            update.scoreRegularAway = apiMatch.score?.regularTime?.away ?? null;
+            update.scoreExtraHome = apiMatch.score?.extraTime?.home ?? null;
+            update.scoreExtraAway = apiMatch.score?.extraTime?.away ?? null;
+            update.scorePenaltiesHome = apiMatch.score?.penalties?.home ?? null;
+            update.scorePenaltiesAway = apiMatch.score?.penalties?.away ?? null;
+          }
           batch.update(matchRef, update);
         }
 
         updatedCount++;
       } catch (err: any) {
         console.error(`[Cron Error match ${doc.id}]:`, err?.message || err);
+        syncErrors.push(`${doc.id}: ${err?.message || err}`);
       }
     }
 
@@ -122,6 +146,12 @@ export async function PUT(request: Request) {
     return NextResponse.json({
       success: true,
       message: `Sync completed. ${updatedCount} matches updated, ${toCalculatePoints.length} finished.`,
+      debug: {
+        baseUrl: process.env.FOOTBALL_DATA_BASE_URL ?? "https://api.football-data.org/v4 (default)",
+        totalMatchDocs: matchDocs.length,
+        skippedNoChange,
+        syncErrors,
+      },
     });
   } catch (error: any) {
     console.error("[General Cron Error]:", error?.message || error);

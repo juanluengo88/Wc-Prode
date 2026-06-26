@@ -1,4 +1,4 @@
-const BASE_URL ="https://api.football-data.org/v4";
+const BASE_URL = process.env.FOOTBALL_DATA_BASE_URL ?? "https://api.football-data.org/v4";
 
 export interface ApiTeam {
 	id: number | null;
