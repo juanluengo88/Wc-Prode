@@ -9,6 +9,7 @@ export function assertPrediction(prediction: Prediction, match: Match): number {
   // Penalty prediction path
   if (prediction.predictPenalties) {
     if (match.scoreDuration !== "PENALTY_SHOOTOUT") return 0;
+    if (!prediction.predictPenaltiesWinner) return 0;
     return prediction.predictPenaltiesWinner === match.winner ? 3 : 0;
   }
 
