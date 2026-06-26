@@ -5,6 +5,7 @@ import React, { useMemo, ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Match } from "@/lib/mockData";
 import { useLanguage } from "@/context/LanguageContext";
+import { localizeGroupOrStage } from "@/lib/translations";
 
 type TabType = "todos" | "pendientes" | "live" | "finalizados";
 
@@ -27,7 +28,7 @@ export default function FixtureNavBar({
 }: FixtureNavBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const tab = (searchParams.get("tab") as TabType) || "todos";
 
@@ -127,7 +128,7 @@ export default function FixtureNavBar({
             >
               <option value="ALL">{t("fixtureNav_allGroups")}</option>
               {groups.map((group) => (
-                <option key={group} value={group}>{group}</option>
+                <option key={group} value={group}>{localizeGroupOrStage(group, lang)}</option>
               ))}
             </select>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
@@ -151,7 +152,7 @@ export default function FixtureNavBar({
             >
               <option value="ALL">{t("fixtureNav_allStages")}</option>
               {stages.map((stage) => (
-                <option key={stage} value={stage}>{stage}</option>
+                <option key={stage} value={stage}>{localizeGroupOrStage(stage, lang)}</option>
               ))}
             </select>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
