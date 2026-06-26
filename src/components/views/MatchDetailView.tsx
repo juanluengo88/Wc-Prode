@@ -9,11 +9,14 @@ import { Team } from "@/lib/footballDataApi";
 import { useMatchDetails } from "@/hooks/useMatchDetails";
 import { useLanguage } from "@/context/LanguageContext";
 import { localizeGroupOrStage } from "@/lib/translations";
+import CommunityPredictions from "@/components/CommunityPredictions";
+import type { OtherPrediction } from "@/app/api/matches/[id]/predictions/route";
 
 interface MatchDetailViewProps {
 	match: Match;
 	teams: Team[];
 	prediction: Prediction | undefined;
+	otherPredictions?: OtherPrediction[];
 	onSavePrediction: (
 		matchId: string,
 		predictHome: number,
@@ -28,6 +31,7 @@ export default function MatchDetailView({
 	match,
 	teams,
 	prediction,
+	otherPredictions,
 	onSavePrediction,
 	onBack,
 }: MatchDetailViewProps) {
@@ -438,6 +442,11 @@ export default function MatchDetailView({
 							</span>
 						</div>
 					)}
+
+				{/* Community predictions */}
+				{match.status === "FINISHED" && otherPredictions && otherPredictions.length > 0 && (
+					<CommunityPredictions predictions={otherPredictions} />
+				)}
 
 				{/* Pre-match stats */}
 				{match.status === "SCHEDULED" && espn && (

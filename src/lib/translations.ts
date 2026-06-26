@@ -60,6 +60,8 @@ const translations = {
 		login_errPopupClosed: "Se cerró la ventana de Google.",
 		login_errInvalidCredential: "Email o contraseña incorrectos.",
 		login_errGeneric: "Ocurrió un error. Intentá de nuevo.",
+		login_errMicrosoftTenantNotSet:
+			"El inicio de sesión con Microsoft no está disponible: falta configurar el tenant de la organización.",
 
 		// ProfileView
 		profile_title: "Mi Perfil",
@@ -157,6 +159,10 @@ const translations = {
 		matchDetail_timelineTitle: "Línea de Tiempo del Partido",
 		matchDetail_pendingTeams: "Equipos pendientes de clasificación",
 
+		// Community Predictions
+		community_title: "Pronósticos del Grupo",
+		community_subtitle: "{count} pronósticos de tus grupos",
+
 		// MatchCard
 		card_predicted: "Pronosticado",
 		card_live: "En Vivo",
@@ -233,7 +239,8 @@ const translations = {
 		banner_partialLabel: "Parcial",
 		banner_standings_badge: "NUEVA FUNCIÓN",
 		banner_standings_title: "¡Ya podés ver los Standings de la Fase de Grupos!",
-		banner_standings_desc: "Seguí en tiempo real las posiciones de cada grupo del Mundial. Descubrí quiénes están clasificando y quiénes luchan por un lugar.",
+		banner_standings_desc:
+			"Seguí en tiempo real las posiciones de cada grupo del Mundial. Descubrí quiénes están clasificando y quiénes luchan por un lugar.",
 		banner_standings_btn: "Ver Standings",
 
 		// AdminConsoleView
@@ -317,6 +324,8 @@ const translations = {
 		login_errPopupClosed: "Google sign-in window was closed.",
 		login_errInvalidCredential: "Incorrect email or password.",
 		login_errGeneric: "An error occurred. Please try again.",
+		login_errMicrosoftTenantNotSet:
+			"Microsoft sign-in is unavailable: the organisation tenant is not configured.",
 
 		// ProfileView
 		profile_title: "My Profile",
@@ -410,6 +419,10 @@ const translations = {
 		matchDetail_timelineTitle: "Match Timeline",
 		matchDetail_pendingTeams: "Teams pending qualification",
 
+		// Community Predictions
+		community_title: "Group Predictions",
+		community_subtitle: "{count} predictions from your groups",
+
 		// MatchCard
 		card_predicted: "Predicted",
 		card_live: "Live",
@@ -486,7 +499,8 @@ const translations = {
 		banner_partialLabel: "Partial",
 		banner_standings_badge: "NEW FEATURE",
 		banner_standings_title: "Group Stage Standings are now live!",
-		banner_standings_desc: "Follow each group's standings in real time. See who's advancing and who's fighting for a spot.",
+		banner_standings_desc:
+			"Follow each group's standings in real time. See who's advancing and who's fighting for a spot.",
 		banner_standings_btn: "View Standings",
 
 		// AdminConsoleView
