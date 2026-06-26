@@ -73,6 +73,13 @@ export async function POST(request: NextRequest) {
 			scoreHome: apiMatch.score.fullTime.home,
 			scoreAway: apiMatch.score.fullTime.away,
 			groupOrStage: mapGroupOrStage(apiMatch),
+			scoreDuration: apiMatch.score.duration ?? null,
+			scoreRegularHome: apiMatch.score.regularTime?.home ?? null,
+			scoreRegularAway: apiMatch.score.regularTime?.away ?? null,
+			scoreExtraHome: apiMatch.score.extraTime?.home ?? null,
+			scoreExtraAway: apiMatch.score.extraTime?.away ?? null,
+			scorePenaltiesHome: apiMatch.score.penalties?.home ?? null,
+			scorePenaltiesAway: apiMatch.score.penalties?.away ?? null,
 		};
 
 		matchBatch.set(db.collection("matches").doc(matchId), data);

@@ -304,7 +304,41 @@ export async function GET(
       if (descripcion) incidencias.push({ tiempo, descripcion, tipo });
     });
 
-    // --- 8. RETORNO DE LA RESPUESTA ---
+    // 8. TANDA DE PENALES
+    const shootoutScoreHome = homeTeamData?.shootoutScore !== undefined
+      ? parseInt(homeTeamData.shootoutScore)
+      : null;
+    const shootoutScoreAway = awayTeamData?.shootoutScore !== undefined
+      ? parseInt(awayTeamData.shootoutScore)
+      : null;
+
+    // También buscar en las estadísticas del boxscore
+    const statsHome = data?.boxscore?.teams?.find((t: any) => t.homeAway === "home")?.statistics || [];
+    const statsAway = data?.boxscore?.teams?.find((t: any) => t.homeAway === "away")?.statistics || [];
+    const penGoalsHome = statsHome.find((s: any) => s.name === "penaltyKickGoals")?.displayValue;
+    const penGoalsAway = statsAway.find((s: any) => s.name === "penaltyKickGoals")?.displayValue;
+
+    const penalesScoreHome = shootoutScoreHome ?? (penGoalsHome !== undefined ? parseInt(penGoalsHome) : null);
+    const penalesScoreAway = shootoutScoreAway ?? (penGoalsAway !== undefined ? parseInt(penGoalsAway) : null);
+
+    const shootoutStarted = keyEvents.some(
+      (e: any) => (e?.type?.type || "").includes("shootout"),
+    );
+
+    const huboTandaDePenales =
+      shootoutStarted ||
+      (penalesScoreHome !== null &&
+        penalesScoreAway !== null &&
+        (penalesScoreHome > 0 || penalesScoreAway > 0));
+
+    // Ganador de la tanda
+    let ganadorPenales: "home" | "away" | null = null;
+    if (huboTandaDePenales && penalesScoreHome !== null && penalesScoreAway !== null) {
+      if (penalesScoreHome > penalesScoreAway) ganadorPenales = "home";
+      else if (penalesScoreAway > penalesScoreHome) ganadorPenales = "away";
+    }
+
+    // --- 9. RETORNO DE LA RESPUESTA ---
     return NextResponse.json({
       success: true,
       juegoIdESPN: juegoId,
@@ -330,6 +364,12 @@ export async function GET(
         historialH2H,
       },
       eventosEnVivo: incidencias,
+      tandaDePenales: {
+        hubo: huboTandaDePenales,
+        scoreHome: penalesScoreHome,
+        scoreAway: penalesScoreAway,
+        ganador: ganadorPenales,
+      },
     });
   } catch (error: any) {
     console.error("[Scraper-Native-Error]:", error.message);

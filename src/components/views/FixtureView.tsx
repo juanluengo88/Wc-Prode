@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Match, Prediction, User } from "../../lib/mockData";
 import MotivanationalBanner from "../banners/MotivationalBanner";
 import MatchCard from "@/components/cards/MatchCard";
@@ -13,7 +13,7 @@ interface FixtureViewProps {
   user: User;
   matches: Match[];
   predictions: Prediction[];
-  onSelectMatch: (matchId: string) => void;
+  onSelectMatch: (matchId: string, fromUrl?: string) => void;
   onLogout: () => void;
 }
 
@@ -26,33 +26,26 @@ export default function FixtureView({
   const searchParams = useSearchParams();
   const { t } = useLanguage();
 
-  const {
-    filteredMatches,
-    setFilteredMatches,
-    isMatchLocked,
-    getPrediction,
-    getPointsBadgeColor,
-    teamsAreDefined
-  } = useFixtureView({ matches, predictions });
+  const { isMatchLocked, getPrediction, getPointsBadgeColor, teamsAreDefined } = useFixtureView({ matches, predictions });
 
-  const queryPage = searchParams.get("page");
-  const initialPage = queryPage ? parseInt(queryPage, 10) : 1;
-
-  const [currentPage, setCurrentPage] = useState<number>(initialPage);
+  const tab = searchParams.get("tab") || "todos";
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+  const selectedGroup = searchParams.get("group") || "ALL";
+  const selectedStage = searchParams.get("stage") || "ALL";
+  const [search, setSearch] = useState("");
   const matchesPerPage = 20;
 
-  useEffect(() => {
-    if (queryPage) {
-      setCurrentPage(parseInt(queryPage, 10));
-    }
-  }, [queryPage]);
-
-  useEffect(() => {
-    const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
-    if (currentPage > totalPages && totalPages > 0) {
-      handlePageChange(totalPages);
-    }
-  }, [filteredMatches.length]);
+  const filteredMatches = React.useMemo(() => {
+    const statusMap: Record<string, string> = { pendientes: "SCHEDULED", live: "LIVE", finalizados: "FINISHED" };
+    const statusFilter = statusMap[tab] ?? null;
+    return matches.filter((m) => {
+      const statusOk = statusFilter === null || m.status === statusFilter;
+      const groupOk = selectedGroup === "ALL" || m.groupOrStage === selectedGroup;
+      const stageOk = selectedStage === "ALL" || m.groupOrStage === selectedStage;
+      const searchOk = search.trim() === "" || m.teamHome?.toLowerCase().includes(search.toLowerCase()) || m.teamAway?.toLowerCase().includes(search.toLowerCase());
+      return statusOk && groupOk && stageOk && searchOk;
+    });
+  }, [matches, tab, search, selectedGroup, selectedStage]);
 
   const indexOfLastMatch = currentPage * matchesPerPage;
   const indexOfFirstMatch = indexOfLastMatch - matchesPerPage;
@@ -60,8 +53,11 @@ export default function FixtureView({
   const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
 
   const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-    router.push(`?page=${pageNumber}`, { scroll: false });
+    const params = new URLSearchParams(searchParams.toString());
+    if (pageNumber === 1) params.delete("page");
+    else params.set("page", String(pageNumber));
+    const qs = params.toString();
+    router.push(qs ? `/fixture?${qs}` : "/fixture", { scroll: false });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -72,7 +68,11 @@ export default function FixtureView({
 
         <FixtureNavBar
           matches={matches}
-          onFilteredMatchesChange={setFilteredMatches}
+          search={search}
+          selectedGroup={selectedGroup}
+          selectedStage={selectedStage}
+          onSearchChange={setSearch}
+          filteredCount={filteredMatches.length}
         />
 
         {filteredMatches.length === 0 ? (
@@ -109,7 +109,7 @@ export default function FixtureView({
                       match.status !== "SCHEDULED"
                     }
                     tbdTeams={tbdTeams}
-                    onSelectMatch={onSelectMatch}
+                    onSelectMatch={(matchId) => onSelectMatch(matchId, window.location.pathname + window.location.search)}
                     getPointsBadgeColor={getPointsBadgeColor}
                     readonly={true}
                   />

@@ -106,7 +106,6 @@ export default function LoginView() {
 		}
 
 		microsoftProvider.setCustomParameters({ tenant: tenantId });
-
 		try {
 			const { user } = await signInWithPopup(auth, microsoftProvider);
 			await ensureUserDoc(
@@ -148,9 +147,7 @@ export default function LoginView() {
 					<h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
 						{t("appTitle")}
 					</h1>
-					<p className="text-sm text-slate-400 mt-2">
-						{t("login_subtitle")}
-					</p>
+					<p className="text-sm text-slate-400 mt-2">{t("login_subtitle")}</p>
 				</div>
 
 				{/* Tab Headers */}
@@ -258,7 +255,9 @@ export default function LoginView() {
 								<span>{t("login_btnLoading")}</span>
 							</>
 						) : (
-							<span>{isSignUp ? t("login_btnSignUp") : t("login_btnSubmit")}</span>
+							<span>
+								{isSignUp ? t("login_btnSignUp") : t("login_btnSubmit")}
+							</span>
 						)}
 					</button>
 				</form>

@@ -6,8 +6,15 @@ import { db } from "@/lib/firebaseAdmin";
  * @returns 
  */
 export function assertPrediction(prediction: Prediction, match: Match): number {
-  const realHome = match.scoreHome;
-  const realAway = match.scoreAway;
+  // Penalty prediction path
+  if (prediction.predictPenalties) {
+    if (match.scoreDuration !== "PENALTY_SHOOTOUT") return 0;
+    return prediction.predictPenaltiesWinner === match.winner ? 3 : 0;
+  }
+
+  // Regular prediction path
+  const realHome = match.scoreRegularHome ?? match.scoreHome;
+  const realAway = match.scoreRegularAway ?? match.scoreAway;
   const predHome = prediction.predictHome;
   const predAway = prediction.predictAway;
 
@@ -19,12 +26,11 @@ export function assertPrediction(prediction: Prediction, match: Match): number {
     return 3;
   }
 
-  const tendenciaReal = realHome > realAway ? 1 : realHome < realAway ? 2 : 0;
-  const tendenciaPred = predHome > predAway ? 1 : predHome < predAway ? 2 : 0;
+  const winner = match.winner ?? (
+    realHome > realAway ? "HOME_TEAM" : realAway > realHome ? "AWAY_TEAM" : "DRAW"
+  );
+  const predictedWinner =
+    predHome > predAway ? "HOME_TEAM" : predAway > predHome ? "AWAY_TEAM" : "DRAW";
 
-  if (tendenciaReal === tendenciaPred) {
-    return 1;
-  }
-
-  return 0;
+  return winner === predictedWinner ? 1 : 0;
 }
