@@ -10,6 +10,7 @@ import { useMatchDetails } from "@/hooks/useMatchDetails";
 import { useLanguage } from "@/context/LanguageContext";
 import { localizeGroupOrStage } from "@/lib/translations";
 import CommunityPredictions from "@/components/CommunityPredictions";
+import LineupPitch from "@/components/LineupPitch";
 import type { OtherPrediction } from "@/app/api/matches/[id]/predictions/route";
 
 interface MatchDetailViewProps {
@@ -674,32 +675,48 @@ export default function MatchDetailView({
 
 				{/* Live / Finished */}
 				{["FINISHED", "LIVE"].includes(match.status) && espn && (
-					<div className="space-y-6">
-						<div className="bg-slate-900/60 border border-slate-850 p-6 rounded-3xl shadow-xl space-y-4">
-							<h4 className="text-xs font-black text-slate-400 uppercase tracking-wider text-center">
-								{t("matchDetail_tacticsTitle")}
-							</h4>
-							<div className="flex justify-around items-center bg-slate-950/80 rounded-2xl border border-slate-900 p-4 font-mono text-center">
-								<div className="flex flex-col">
-									<span className="text-slate-500 text-[10px] uppercase font-bold">
-										{match.teamHome}
-									</span>
-									<span className="text-xl font-black text-indigo-400 mt-1">
-										{espn.detallesTacticos?.formacionHome || "N/A"}
-									</span>
-								</div>
-								<div className="w-px h-10 bg-slate-800" />
-								<div className="flex flex-col">
-									<span className="text-slate-500 text-[10px] uppercase font-bold">
-										{match.teamAway}
-									</span>
-									<span className="text-xl font-black text-amber-400 mt-1">
-										{espn.detallesTacticos?.formacionAway || "N/A"}
-									</span>
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+						{/* Left: Lineup pitch */}
+						{espn.detallesTacticos?.formacionHome &&
+							Array.isArray(espn.detallesTacticos.titularesHome) &&
+							espn.detallesTacticos.titularesHome.length > 0 ? (
+							<LineupPitch
+								formacionHome={espn.detallesTacticos.formacionHome}
+								formacionAway={espn.detallesTacticos.formacionAway}
+								titularesHome={espn.detallesTacticos.titularesHome}
+								titularesAway={espn.detallesTacticos.titularesAway}
+								teamHome={match.teamHome}
+								teamAway={match.teamAway}
+							/>
+						) : (
+							/* Fallback: only formation numbers when no lineup data */
+							<div className="bg-slate-900/60 border border-slate-850 p-6 rounded-3xl shadow-xl space-y-4">
+								<h4 className="text-xs font-black text-slate-400 uppercase tracking-wider text-center">
+									{t("matchDetail_tacticsTitle")}
+								</h4>
+								<div className="flex justify-around items-center bg-slate-950/80 rounded-2xl border border-slate-900 p-4 font-mono text-center">
+									<div className="flex flex-col">
+										<span className="text-slate-500 text-[10px] uppercase font-bold">
+											{match.teamHome}
+										</span>
+										<span className="text-xl font-black text-indigo-400 mt-1">
+											{espn.detallesTacticos?.formacionHome || "N/A"}
+										</span>
+									</div>
+									<div className="w-px h-10 bg-slate-800" />
+									<div className="flex flex-col">
+										<span className="text-slate-500 text-[10px] uppercase font-bold">
+											{match.teamAway}
+										</span>
+										<span className="text-xl font-black text-amber-400 mt-1">
+											{espn.detallesTacticos?.formacionAway || "N/A"}
+										</span>
+									</div>
 								</div>
 							</div>
-						</div>
+						)}
 
+						{/* Right: Timeline */}
 						{Array.isArray(espn.eventosEnVivo) &&
 							espn.eventosEnVivo.length > 0 && (
 								<div className="bg-slate-900/60 border border-slate-850 p-6 rounded-3xl shadow-xl space-y-4">
