@@ -1,8 +1,8 @@
 export type Lang = "es" | "en";
 
 export const LANG_LOCALE: Record<Lang, string> = {
-  es: "es-ES",
-  en: "en-US",
+	es: "es-ES",
+	en: "en-US",
 };
 
 const translations = {
