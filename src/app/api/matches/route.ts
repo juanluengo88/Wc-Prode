@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
 import type { Match } from "@/lib/mockData";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
 	const snapshot = await db
 		.collection("matches")

@@ -7,7 +7,7 @@ import { localizeGroupOrStage } from "@/lib/translations";
 interface MatchCardProps {
   match: Match;
   pred?: Prediction;
-  locked?: boolean;
+  locked?: boolean; 
   tbdTeams?: boolean;
   homeVal?: string;
   awayVal?: string;

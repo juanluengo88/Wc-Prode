@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
-import { fetchWCMatches, mapStatus, mapGroupOrStage } from "@/lib/footballDataApi";
+import { fetchSingleMatch, mapStatus, mapGroupOrStage } from "@/lib/footballDataApi";
+import { sleep } from "@/lib/utils";
 
 /**
  * PUT /api/cron/sync-match-stages
  *
- * Fetches all WC matches from football-data.org and updates only the ones
- * that currently have null teamHome or teamAway in Firestore.
+ * For each SCHEDULED match with null teamHome or teamAway, calls the individual
+ * match endpoint (which returns full team data unlike the competition endpoint).
+ * Updates teamHome/teamAway only for the side that is already resolved in the API.
  * Runs once per day via Vercel Cron.
  */
 export async function PUT() {
@@ -19,42 +21,51 @@ export async function PUT() {
       );
     }
 
-    // Find which match IDs are still TBD
+    // Find which match IDs are still TBD in Firestore
     const snap = await db
       .collection("matches")
       .where("status", "==", "SCHEDULED")
       .get();
 
-    const tbdIds = new Set(
-      snap.docs
-        .filter((d) => !d.data().teamHome || !d.data().teamAway)
-        .map((d) => d.id),
-    );
+    const tbdIds = snap.docs
+      .filter((d) => d.data().teamHome == null || d.data().teamAway == null)
+      .map((d) => d.id);
 
-    if (tbdIds.size === 0) {
+    if (tbdIds.length === 0) {
       return NextResponse.json({ success: true, message: "No TBD matches to update" });
     }
-
-    // Fetch all WC matches from the API (single request)
-    const apiMatches = await fetchWCMatches(token);
 
     const batch = db.batch();
     let updatedCount = 0;
 
-    for (const match of apiMatches) {
-      const id = String(match.id);
-      if (!tbdIds.has(id)) continue;
-      if (match.homeTeam.id === null && match.awayTeam.id === null) continue; // still TBD in the API too
+    for (const id of tbdIds) {
+      try {
+        const match = await fetchSingleMatch(id, token);
+        await sleep(600); // 10 req/min limit → 6s between calls
 
-      batch.update(db.collection("matches").doc(id), {
-        teamHome: match.homeTeam.name,
-        teamAway: match.awayTeam.name,
-        teamHomeFlag: match.homeTeam.crest,
-        teamAwayFlag: match.awayTeam.crest,
-        groupOrStage: mapGroupOrStage(match),
-        status: mapStatus(match.status),
-      });
-      updatedCount++;
+        const homeResolved = match.homeTeam.id !== null && match.homeTeam.name !== null;
+        const awayResolved = match.awayTeam.id !== null && match.awayTeam.name !== null;
+        if (!homeResolved && !awayResolved) continue;
+
+        const update: Record<string, unknown> = {
+          groupOrStage: mapGroupOrStage(match),
+          status: mapStatus(match.status),
+        };
+        if (homeResolved) {
+          update.teamHome = match.homeTeam.name;
+          update.teamHomeFlag = match.homeTeam.crest;
+        }
+        if (awayResolved) {
+          update.teamAway = match.awayTeam.name;
+          update.teamAwayFlag = match.awayTeam.crest;
+        }
+
+        batch.update(db.collection("matches").doc(id), update);
+        updatedCount++;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[sync-match-stages] Error match ${id}:`, msg);
+      }
     }
 
     if (updatedCount > 0) {
@@ -63,7 +74,7 @@ export async function PUT() {
 
     return NextResponse.json({
       success: true,
-      message: `Found ${tbdIds.size} TBD matches, updated ${updatedCount}.`,
+      message: `Checked ${tbdIds.length} TBD matches, updated ${updatedCount}.`,
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);

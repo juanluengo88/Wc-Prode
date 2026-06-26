@@ -21,7 +21,7 @@ interface MatchDetailViewProps {
 		matchId: string,
 		predictHome: number,
 		predictAway: number,
-		predictPenalties: boolean,
+		prePictPenalties: boolean,
 		predictPenaltiesWinner: "HOME_TEAM" | "AWAY_TEAM" | null,
 	) => Promise<void>;
 	onBack: () => void;
