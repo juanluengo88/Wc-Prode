@@ -30,7 +30,13 @@ function PointsBadge({ points }: { points: number | null }) {
 	);
 }
 
-function Avatar({ displayName, photoURL }: { displayName: string; photoURL?: string }) {
+function Avatar({
+	displayName,
+	photoURL,
+}: {
+	displayName: string;
+	photoURL?: string;
+}) {
 	if (photoURL) {
 		return (
 			<img
@@ -53,7 +59,9 @@ function Avatar({ displayName, photoURL }: { displayName: string; photoURL?: str
 	);
 }
 
-export default function CommunityPredictions({ predictions }: CommunityPredictionsProps) {
+export default function CommunityPredictions({
+	predictions,
+}: CommunityPredictionsProps) {
 	const { t } = useLanguage();
 
 	if (predictions.length === 0) return null;
