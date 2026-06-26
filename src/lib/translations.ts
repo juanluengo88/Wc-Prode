@@ -164,6 +164,7 @@ const translations = {
 		matchDetail_tacticsTitle: "Esquemas Tácticos Iniciales",
 		matchDetail_timelineTitle: "Línea de Tiempo del Partido",
 		matchDetail_pendingTeams: "Equipos pendientes de clasificación",
+		matchDetail_penalties: "Penales",
 
 		// Community Predictions
 		community_title: "Pronósticos del Grupo",
@@ -425,6 +426,7 @@ const translations = {
 		matchDetail_tacticsTitle: "Starting Tactical Formations",
 		matchDetail_timelineTitle: "Match Timeline",
 		matchDetail_pendingTeams: "Teams pending qualification",
+		matchDetail_penalties: "Penalties",
 
 		// Community Predictions
 		community_title: "Group Predictions",

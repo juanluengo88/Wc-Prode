@@ -269,7 +269,26 @@ export default function MatchDetailView({
 											{match.scoreAway}
 										</span>
 									</div>
-									{match.status === "LIVE" && (
+									{match.scorePenaltiesHome !== null &&
+									match.scorePenaltiesAway !== null && (
+										<div className="mt-2 flex flex-col items-center gap-1">
+											<span className="text-[10px] text-violet-400 font-black uppercase tracking-widest">
+												{t("matchDetail_penalties")}
+											</span>
+											<div className="flex items-center gap-2 bg-violet-950/40 px-3 py-1.5 rounded-xl border border-violet-500/25">
+												<span className="text-lg sm:text-2xl font-black text-violet-300">
+													{match.scorePenaltiesHome}
+												</span>
+												<span className="text-violet-500 font-extrabold text-base">
+													-
+												</span>
+												<span className="text-lg sm:text-2xl font-black text-violet-300">
+													{match.scorePenaltiesAway}
+												</span>
+											</div>
+										</div>
+									)}
+								{match.status === "LIVE" && (
 										<span className="inline-flex items-center gap-1.5 mt-2 bg-red-500/10 text-red-400 text-[10px] font-black uppercase px-3 py-1 rounded-full border border-red-500/25 animate-pulse">
 											<span className="w-1.5 h-1.5 rounded-full bg-red-500" />{" "}
 											{t("matchDetail_live")}
