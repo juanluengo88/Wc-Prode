@@ -34,7 +34,7 @@ export default function FixtureNavBar({
   const buildUrl = (updates: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
     for (const [k, v] of Object.entries(updates)) {
-      if (v === "ALL" || v === "todos" || v === "") params.delete(k);
+      if (v === "ALL" || v === "todos" || v === "" || v === "1") params.delete(k);
       else params.set(k, v);
     }
     const qs = params.toString();
@@ -42,10 +42,10 @@ export default function FixtureNavBar({
   };
 
   const setGroup = (v: string) => {
-    router.replace(buildUrl({ group: v, stage: "ALL" }), { scroll: false });
+    router.replace(buildUrl({ group: v, stage: "ALL", tab: "todos", page: "1" }), { scroll: false });
   };
   const setStage = (v: string) => {
-    router.replace(buildUrl({ stage: v, group: "ALL" }), { scroll: false });
+    router.replace(buildUrl({ stage: v, group: "ALL", tab: "todos", page: "1" }), { scroll: false });
   };
 
   const { groups, stages } = useMemo(() => {

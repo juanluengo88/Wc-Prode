@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState } from "react";
 import { Match, Prediction, User } from "../../lib/mockData";
 import MotivanationalBanner from "../banners/MotivationalBanner";
 import MatchCard from "@/components/cards/MatchCard";
@@ -29,7 +29,7 @@ export default function FixtureView({
   const { isMatchLocked, getPrediction, getPointsBadgeColor, teamsAreDefined } = useFixtureView({ matches, predictions });
 
   const tab = searchParams.get("tab") || "todos";
-  const page = parseInt(searchParams.get("page") || "1", 10);
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const selectedGroup = searchParams.get("group") || "ALL";
   const selectedStage = searchParams.get("stage") || "ALL";
   const [search, setSearch] = useState("");
@@ -47,27 +47,17 @@ export default function FixtureView({
     });
   }, [matches, tab, search, selectedGroup, selectedStage]);
 
-  const [currentPage, setCurrentPage] = useState<number>(page);
-
-  useEffect(() => {
-    setCurrentPage(page);
-  }, [page]);
-
-  useEffect(() => {
-    const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
-    if (currentPage > totalPages && totalPages > 0) {
-      handlePageChange(totalPages);
-    }
-  }, [filteredMatches.length]);
-
   const indexOfLastMatch = currentPage * matchesPerPage;
   const indexOfFirstMatch = indexOfLastMatch - matchesPerPage;
   const currentMatches = filteredMatches.slice(indexOfFirstMatch, indexOfLastMatch);
   const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
 
   const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-    router.push(`?page=${pageNumber}`, { scroll: false });
+    const params = new URLSearchParams(searchParams.toString());
+    if (pageNumber === 1) params.delete("page");
+    else params.set("page", String(pageNumber));
+    const qs = params.toString();
+    router.push(qs ? `/fixture?${qs}` : "/fixture", { scroll: false });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 

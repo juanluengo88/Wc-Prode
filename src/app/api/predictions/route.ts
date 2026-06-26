@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
 import type { Prediction } from "@/lib/mockData";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
 	const uid = request.nextUrl.searchParams.get("uid");
 	if (!uid) return NextResponse.json([]);
