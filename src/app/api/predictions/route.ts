@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
 	const { uid, matchId, predictHome, predictAway, predictPenalties, predictPenaltiesWinner } = body as {
 		uid: string;
 		matchId: string;
-		predictHome: number;
-		predictAway: number;
+		predictHome: number | null;
+		predictAway: number | null;
 		predictPenalties: boolean;
 		predictPenaltiesWinner: "HOME_TEAM" | "AWAY_TEAM" | null;
 	};

@@ -4,8 +4,8 @@ export type Prediction = {
   uid: string;
   matchId: string;
   userId: string;
-  predictHome: number;
-  predictAway: number;
+  predictHome: number | null;
+  predictAway: number | null;
   pointsEarned: number | null;
   timestamp?: string;
   predictPenalties: boolean;
@@ -26,8 +26,8 @@ export async function getPredictionsByMatchId(matchId: string): Promise<Predicti
       uid: doc.id,
       matchId: data.matchId ?? "",
       userId: data.userId ?? data.uid ?? "",
-      predictHome: Number(data.predictHome ?? 0),
-      predictAway: Number(data.predictAway ?? 0),
+      predictHome: data.predictHome !== null && data.predictHome !== undefined ? Number(data.predictHome) : null,
+      predictAway: data.predictAway !== null && data.predictAway !== undefined ? Number(data.predictAway) : null,
       pointsEarned: data.pointsEarned !== undefined ? data.pointsEarned : null,
       predictPenalties: data.predictPenalties ?? false,
       predictPenaltiesWinner: data.predictPenaltiesWinner ?? null,

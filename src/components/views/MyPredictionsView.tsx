@@ -217,11 +217,11 @@ export default function MyPredictionsView({
 											) : (
 												<div className="flex items-center gap-1.5">
 													<span className="text-sm font-black text-amber-400">
-														{prediction.predictHome}
+														{prediction.predictHome ?? "-"}
 													</span>
 													<span className="text-slate-655 font-bold text-xs">-</span>
 													<span className="text-sm font-black text-amber-400">
-														{prediction.predictAway}
+														{prediction.predictAway ?? "-"}
 													</span>
 												</div>
 											)}

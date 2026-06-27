@@ -18,7 +18,7 @@ export function assertPrediction(prediction: Prediction, match: Match): number {
   const predHome = prediction.predictHome;
   const predAway = prediction.predictAway;
 
-  if (realHome === null || realAway === null || isNaN(predHome) || isNaN(predAway)) {
+  if (realHome === null || realAway === null || predHome === null || predAway === null || isNaN(predHome) || isNaN(predAway)) {
     return 0;
   }
 

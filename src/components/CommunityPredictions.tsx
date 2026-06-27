@@ -90,7 +90,7 @@ export default function CommunityPredictions({
 						</span>
 
 						<span className="font-mono text-sm font-black text-white shrink-0">
-							{p.predictHome} – {p.predictAway}
+							{p.predictHome ?? "-"} – {p.predictAway ?? "-"}
 						</span>
 
 						<PointsBadge points={p.pointsEarned} />

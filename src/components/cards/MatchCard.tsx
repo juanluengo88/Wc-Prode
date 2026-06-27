@@ -169,17 +169,30 @@ export default function MatchCard({
 					) : readonly ? (
 						tienePrediccionHecha ? (
 							<div className="flex flex-col items-center gap-1">
-								<div className="flex items-center gap-2 bg-indigo-950/40 px-3 py-1 rounded-xl border border-indigo-500/20 shadow-inner">
-									<span className="text-sm font-black text-indigo-300">
-										{pred.predictHome}
-									</span>
-									<span className="text-indigo-500/60 text-xs font-bold">
-										:
-									</span>
-									<span className="text-sm font-black text-indigo-300">
-										{pred.predictAway}
-									</span>
-								</div>
+								{pred.predictPenalties ? (
+									<div className="flex flex-col items-center gap-0.5 bg-violet-950/40 px-3 py-1 rounded-xl border border-violet-500/20 shadow-inner">
+										<span className="text-[9px] text-violet-400 font-bold uppercase tracking-wider">Penales</span>
+										<span className="text-xs font-black text-violet-300">
+											{pred.predictPenaltiesWinner === "HOME_TEAM"
+												? match.teamHome
+												: pred.predictPenaltiesWinner === "AWAY_TEAM"
+												? match.teamAway
+												: "-"}
+										</span>
+									</div>
+								) : (
+									<div className="flex items-center gap-2 bg-indigo-950/40 px-3 py-1 rounded-xl border border-indigo-500/20 shadow-inner">
+										<span className="text-sm font-black text-indigo-300">
+											{pred.predictHome ?? "-"}
+										</span>
+										<span className="text-indigo-500/60 text-xs font-bold">
+											:
+										</span>
+										<span className="text-sm font-black text-indigo-300">
+											{pred.predictAway ?? "-"}
+										</span>
+									</div>
+								)}
 								<span className="text-[8px] text-indigo-400/80 font-semibold uppercase tracking-wider">
 									{t("card_yourBet")}
 								</span>
@@ -203,7 +216,7 @@ export default function MatchCard({
 								value={homeVal}
 								disabled={locked}
 								placeholder={
-									tienePrediccionHecha ? pred.predictHome.toString() : "-"
+									tienePrediccionHecha ? (pred.predictHome?.toString() ?? "-") : "-"
 								}
 								onChange={(e) =>
 									onInputChange?.(match.matchId, "home", e.target.value)
@@ -221,7 +234,7 @@ export default function MatchCard({
 								value={awayVal}
 								disabled={locked}
 								placeholder={
-									tienePrediccionHecha ? pred.predictAway.toString() : "-"
+									tienePrediccionHecha ? (pred.predictAway?.toString() ?? "-") : "-"
 								}
 								onChange={(e) =>
 									onInputChange?.(match.matchId, "away", e.target.value)
@@ -312,7 +325,7 @@ export default function MatchCard({
 						) : match.status === "LIVE" ? (
 							pred ? (
 								<span className="text-[10px] text-slate-400 bg-slate-800/40 px-2 py-0.5 rounded border border-slate-700/30">
-									Pronóstico: {pred.predictHome}-{pred.predictAway}
+									Pronóstico: {pred.predictHome ?? "-"}-{pred.predictAway ?? "-"}
 								</span>
 							) : (
 								<span className="text-[10px] text-red-400">
@@ -373,7 +386,7 @@ export default function MatchCard({
 							</button>
 						) : pred ? (
 							<span className="text-[10px] text-slate-400 bg-slate-800/40 px-2 py-0.5 rounded border border-slate-700/30">
-								Pronóstico: {pred.predictHome}-{pred.predictAway}
+								Pronóstico: {pred.predictHome ?? "-"}-{pred.predictAway ?? "-"}
 							</span>
 						) : (
 							<span className="text-[10px] text-slate-500 uppercase font-semibold">

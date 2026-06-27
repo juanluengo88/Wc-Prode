@@ -75,8 +75,8 @@ export function useProdeApp() {
 
 	const handleSavePrediction = async (
 		matchId: string,
-		predictHome: number,
-		predictAway: number,
+		predictHome: number | null,
+		predictAway: number | null,
 		predictPenalties: boolean = false,
 		predictPenaltiesWinner: "HOME_TEAM" | "AWAY_TEAM" | null = null,
 	) => {

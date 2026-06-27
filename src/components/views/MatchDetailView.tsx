@@ -20,8 +20,8 @@ interface MatchDetailViewProps {
 	otherPredictions?: OtherPrediction[];
 	onSavePrediction: (
 		matchId: string,
-		predictHome: number,
-		predictAway: number,
+		predictHome: number | null,
+		predictAway: number | null,
 		prePictPenalties: boolean,
 		predictPenaltiesWinner: "HOME_TEAM" | "AWAY_TEAM" | null,
 	) => Promise<void>;
@@ -39,10 +39,10 @@ export default function MatchDetailView({
 	const router = useRouter();
 	const { t, lang, locale } = useLanguage();
 	const [homeScore, setHomeScore] = useState(
-		prediction?.predictHome.toString() ?? "0",
+		prediction?.predictHome?.toString() ?? "0",
 	);
 	const [awayScore, setAwayScore] = useState(
-		prediction?.predictAway.toString() ?? "0",
+		prediction?.predictAway?.toString() ?? "0",
 	);
 	const [isSaving, setIsSaving] = useState(false);
 	const [showSuccess, setShowSuccess] = useState(false);
@@ -61,8 +61,8 @@ export default function MatchDetailView({
 
 	useEffect(() => {
 		if (prediction) {
-			setHomeScore(prediction.predictHome.toString());
-			setAwayScore(prediction.predictAway.toString());
+			setHomeScore(prediction.predictHome?.toString() ?? "0");
+			setAwayScore(prediction.predictAway?.toString() ?? "0");
 			setPredictPenalties(prediction.predictPenalties ?? false);
 			setPredictPenaltiesWinner(prediction.predictPenaltiesWinner ?? null);
 		}
@@ -135,8 +135,8 @@ export default function MatchDetailView({
 		try {
 			await onSavePrediction(
 				match.matchId,
-				parseInt(homeScore),
-				parseInt(awayScore),
+				predictPenalties ? null : parseInt(homeScore),
+				predictPenalties ? null : parseInt(awayScore),
 				predictPenalties,
 				predictPenalties ? predictPenaltiesWinner : null,
 			);
@@ -384,8 +384,16 @@ export default function MatchDetailView({
 											<button
 												type="button"
 												onClick={() => {
-													setPredictPenalties((v) => !v);
+													const turningOn = !predictPenalties;
+													setPredictPenalties(turningOn);
 													setPredictPenaltiesWinner(null);
+													if (turningOn) {
+														setHomeScore("");
+														setAwayScore("");
+													} else {
+														setHomeScore("0");
+														setAwayScore("0");
+													}
 												}}
 												className={`relative w-12 h-6 rounded-full transition-colors duration-200 border ${predictPenalties ? "bg-violet-600 border-violet-500" : "bg-slate-800 border-slate-700"}`}
 											>

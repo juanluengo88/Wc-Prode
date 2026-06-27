@@ -8,8 +8,8 @@ import { FieldPath } from "firebase-admin/firestore";
 export interface OtherPrediction {
 	userId: string;
 	displayName: string;
-	predictHome: number;
-	predictAway: number;
+	predictHome: number | null;
+	predictAway: number | null;
 	pointsEarned: number | null;
 	photoURL?: string;
 }

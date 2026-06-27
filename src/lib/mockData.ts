@@ -24,8 +24,8 @@ export interface Prediction {
 	predictionId: string;
 	uid: string;
 	matchId: string;
-	predictHome: number;
-	predictAway: number;
+	predictHome: number | null;
+	predictAway: number | null;
 	pointsEarned: number | null;
 	predictPenalties: boolean;
 	predictPenaltiesWinner: "HOME_TEAM" | "AWAY_TEAM" | null;

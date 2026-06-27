@@ -87,24 +87,32 @@ export default function MotivanationalBanner() {
 		return () => clearInterval(timer);
 	}, [active, slides.length]);
 
-	const slide = slides[active];
-
 	return (
 		<div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-slate-800 p-6 sm:p-8">
 			<div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-amber-500/5 blur-[80px] pointer-events-none" />
 
-			<div
-				className="flex flex-col md:flex-row items-center justify-between gap-6 transition-opacity duration-500"
-				style={{ opacity: visible ? 1 : 0 }}
-			>
-				<div className="space-y-2 text-center md:text-left">
-					<span className="text-xs font-semibold uppercase tracking-widest text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
-						{slide.badge}
-					</span>
-					<h3 className="text-2xl font-black text-white mt-3">{slide.title}</h3>
-					{slide.content}
-				</div>
-				{slide.side}
+			{/* All slides rendered in the same grid cell so the container height = tallest slide */}
+			<div style={{ display: "grid" }}>
+				{slides.map((slide, i) => (
+					<div
+						key={i}
+						className="flex flex-col md:flex-row items-center justify-between gap-6 transition-opacity duration-500"
+						style={{
+							gridArea: "1 / 1",
+							opacity: i === active && visible ? 1 : 0,
+							pointerEvents: i === active ? "auto" : "none",
+						}}
+					>
+						<div className="space-y-2 text-center md:text-left">
+							<span className="text-xs font-semibold uppercase tracking-widest text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+								{slide.badge}
+							</span>
+							<h3 className="text-2xl font-black text-white mt-3">{slide.title}</h3>
+							{slide.content}
+						</div>
+						{slide.side}
+					</div>
+				))}
 			</div>
 
 			{/* Dots */}
