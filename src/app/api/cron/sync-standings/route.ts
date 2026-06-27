@@ -14,12 +14,6 @@ export async function PUT() {
       );
     }
 
-    const docRef = db.collection("meta").doc("standings");
-    const stored = await docRef.get();
-    const storedMatchday: number | null = stored.exists
-      ? (stored.data()?.currentMatchday ?? null)
-      : null;
-
     const [standingsRes, scorersRes] = await Promise.all([
       fetch(`${FOOTBALL_DATA_BASE}/competitions/WC/standings`, {
         headers: { "X-Auth-Token": token },
@@ -47,18 +41,8 @@ export async function PUT() {
       scorersRes.json(),
     ]);
 
-    const newMatchday: number = standingsData.season?.currentMatchday;
-
-    if (storedMatchday !== null && storedMatchday === newMatchday) {
-      return NextResponse.json({
-        success: true,
-        message: `No changes — matchday still at ${newMatchday}`,
-        skipped: true,
-      });
-    }
-
-    await docRef.set({
-      currentMatchday: newMatchday,
+    await db.collection("meta").doc("standings").set({
+      currentMatchday: standingsData.season?.currentMatchday ?? null,
       season: standingsData.season,
       standings: standingsData.standings,
       scorers: scorersData.scorers,
@@ -67,8 +51,7 @@ export async function PUT() {
 
     return NextResponse.json({
       success: true,
-      message: `Standings synced — matchday ${storedMatchday ?? "none"} → ${newMatchday}`,
-      skipped: false,
+      message: "Standings synced.",
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
