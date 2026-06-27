@@ -89,7 +89,7 @@ export async function fetchTeamData(
 export function mapStatus(
 	apiStatus: string,
 ): "SCHEDULED" | "LIVE" | "FINISHED" {
-	if (["IN_PLAY", "PAUSED"].includes(apiStatus)) return "LIVE";
+	if (["IN_PLAY", "PAUSED", "LIVE"].includes(apiStatus)) return "LIVE";
 	if (apiStatus === "FINISHED") return "FINISHED";
 	return "SCHEDULED";
 }
