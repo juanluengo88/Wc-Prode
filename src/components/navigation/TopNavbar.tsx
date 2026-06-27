@@ -47,31 +47,33 @@ export default function TopNavbar() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-1.5 sm:gap-3">
 
-                    {/* Language toggle */}
+                    {/* Language toggle — shows active lang only on mobile, both on sm+ */}
                     <button
                         onClick={() => setLang(lang === "es" ? "en" : "es")}
-                        className="flex items-center gap-1 text-xs font-black uppercase tracking-wider py-1.5 px-3 rounded-full border border-slate-600 bg-slate-800 hover:border-amber-500/50 hover:bg-slate-700 transition-all active:scale-[0.97]"
+                        className="flex items-center gap-0.5 sm:gap-1 text-xs sm:text-xs font-black uppercase tracking-wider py-1.5 px-3 sm:py-1.5 sm:px-3 rounded-full border border-slate-600 bg-slate-800 hover:border-amber-500/50 hover:bg-slate-700 transition-all active:scale-[0.97]"
                         title={lang === "es" ? "Switch to English" : "Cambiar a Español"}
                     >
-                        <span className={lang === "es" ? "text-amber-400" : "text-slate-400"}>ES</span>
-                        <span className="text-slate-500">/</span>
-                        <span className={lang === "en" ? "text-amber-400" : "text-slate-400"}>EN</span>
+                        {/* Mobile: just the active language */}
+                        <span className="sm:hidden text-amber-400">{lang.toUpperCase()}</span>
+                        {/* Desktop: ES / EN with active highlighted */}
+                        <span className={`hidden sm:inline ${lang === "es" ? "text-amber-400" : "text-slate-400"}`}>ES</span>
+                        <span className="hidden sm:inline text-slate-500">/</span>
+                        <span className={`hidden sm:inline ${lang === "en" ? "text-amber-400" : "text-slate-400"}`}>EN</span>
                     </button>
 
-                    {/* Admin button */}
+                    {/* Admin button — icon only on mobile, icon + label on sm+ */}
                     {currentUser?.admin && (
                         <button
                             onClick={() => router.push("/admin")}
-                            className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500 text-amber-400 text-xs font-black uppercase tracking-wider py-1.5 px-3 rounded-full transition-all active:scale-[0.98]"
+                            className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500 text-amber-400 text-xs font-black uppercase tracking-wider py-1.5 px-2.5 sm:py-1.5 sm:px-3 rounded-full transition-all active:scale-[0.98]"
                             title="Abrir Consola de Administración"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 sm:w-3.5 sm:h-3.5">
                                 <path fillRule="evenodd" d="M11.986 3H13a1 1 0 0 1 1 1v1.014a2.25 2.25 0 0 1-.659 1.591L11 9.94V13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9.94L2.659 6.605A2.25 2.25 0 0 1 2 5.014V4a1 1 0 0 1 1-1h1.014a2.25 2.25 0 0 1 1.591.659L7.94 5.99l2.334-2.332A2.25 2.25 0 0 1 11.986 3ZM9 9.94l2.155-2.154a.75.75 0 0 0-.024-1.037l-.014-.014a.75.75 0 0 0-1.037-.024L7.94 8.857 5.786 6.711a.75.75 0 0 0-1.037.024l-.014.014a.75.75 0 0 0 .024 1.037L6.94 9.94V13a.5.5 0 0 0 .5.5h1.5a.5.5 0 0 0 .5-.5V9.94Z" clipRule="evenodd" />
                             </svg>
-                            <span className="hidden md:inline">{t("nav_adminConsole")}</span>
-                            <span className="md:hidden">{t("nav_adminConsoleMobile")}</span>
+                            <span className="hidden sm:inline">{t("nav_adminConsole")}</span>
                         </button>
                     )}
 

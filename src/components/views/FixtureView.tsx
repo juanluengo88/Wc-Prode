@@ -63,7 +63,7 @@ export default function FixtureView({
 
   return (
     <div className="flex-1 bg-slate-950 text-slate-100 min-h-screen">
-      <main className="max-w-6xl mx-auto px-4 py-8 sm:px-8 space-y-8">
+      <main className="max-w-6xl mx-auto px-4 pt-8 pb-20 sm:px-8 space-y-8">
         <MotivanationalBanner />
 
         <FixtureNavBar

@@ -12,7 +12,7 @@ export default function BottomNav() {
 	const isActive = (path: string) => pathname === path;
 
 	return (
-		<nav className="sticky bottom-0 z-50 backdrop-blur-lg bg-slate-900/85 border-t border-slate-850 py-2.5 px-4 flex items-center justify-around shadow-[0_-5px_20px_rgba(0,0,0,0.4)]">
+		<nav className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-lg bg-slate-900/85 border-t border-slate-850 py-2.5 px-4 flex items-center justify-around shadow-[0_-5px_20px_rgba(0,0,0,0.4)]">
 			{/* Fixture */}
 			<Link
 				href="/fixture"
