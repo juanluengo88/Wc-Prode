@@ -1,7 +1,7 @@
 // components/FixtureNavBar.tsx
 "use client";
 
-import React, { useMemo, ReactNode } from "react";
+import { useMemo, ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Match } from "@/lib/mockData";
 import { useLanguage } from "@/context/LanguageContext";
@@ -74,12 +74,12 @@ export default function FixtureNavBar({
 	return (
 		<div className="flex flex-col gap-4 border-b border-slate-800 pb-4">
 			<div className="flex flex-wrap items-center justify-between gap-4">
-				<div className="flex gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
+				<div className="flex gap-1.5 bg-slate-900/60 p-1 rounded-xl border border-slate-800 w-full sm:w-auto">
 					{tabs.map(({ key, label }) => (
 						<button
 							key={key}
 							onClick={() => router.push(buildUrl({ tab: key, page: "1" }))}
-							className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+							className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
 								tab === key
 									? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/10"
 									: "text-slate-400 hover:text-slate-200"
