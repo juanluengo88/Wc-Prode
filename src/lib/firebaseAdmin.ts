@@ -12,4 +12,4 @@ if (!getApps().length) {
 	});
 }
 
-export const db = getFirestore();
+export const db = getFirestore("prod");

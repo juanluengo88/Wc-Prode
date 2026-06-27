@@ -1,106 +1,163 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
 import { FieldValue } from "firebase-admin/firestore";
+import { fetchSingleMatch, mapStatus } from "@/lib/footballDataApi";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3000";
 
-async function espnScrapperFetching(idESPN: string) {
-  const urlTarget = `${APP_URL}/api/scraping/match/${idESPN}`;
-  
-  const response = await fetch(urlTarget, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    cache: "no-store", 
-  });
-
-  if (!response.ok) {
-    throw new Error(`Error Scraping API (Status ${response.status}) for the EspnId: ${idESPN}`);
-  }
-
-  return await response.json();
-}
-
 export async function PUT(request: Request) {
   try {
+    const token = process.env.FOOTBALL_DATA_API_TOKEN;
+    if (!token) {
+      return NextResponse.json(
+        { error: "FOOTBALL_DATA_API_TOKEN not configured" },
+        { status: 500 },
+      );
+    }
+
     const now = new Date();
-    const anHourInTheFuture = new Date(now.getTime() + 60 * 60 * 1000);
+    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
-    const matchesSnapshot = await db
-      .collection("matches")
-      .where("status", "in", ["SCHEDULED", "LIVE"])
-      .get();
+    // Fetch LIVE matches + SCHEDULED matches starting within the next hour
+    const [liveSnap, scheduledSnap] = await Promise.all([
+      db.collection("matches").where("status", "==", "LIVE").get(),
+      db
+        .collection("matches")
+        .where("status", "==", "SCHEDULED")
+        .where("dateTime", "<=", oneHourFromNow.toISOString())
+        .get(),
+    ]);
 
-    if (matchesSnapshot.empty) {
-      return NextResponse.json({ success: true, message: "No actives matches to sync" });
+    const matchDocs = [...liveSnap.docs, ...scheduledSnap.docs];
+
+    if (matchDocs.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: "No active matches to sync",
+        debug: {
+          liveCount: liveSnap.size,
+          scheduledWithinHourCount: scheduledSnap.size,
+          baseUrl: process.env.FOOTBALL_DATA_BASE_URL ?? "https://api.football-data.org/v4 (default)",
+          now: now.toISOString(),
+          oneHourFromNow: oneHourFromNow.toISOString(),
+        },
+      });
     }
 
     const batch = db.batch();
-    let editedMatches = 0;
+    let updatedCount = 0;
+    const toCalculatePoints: string[] = [];
+    const syncErrors: string[] = [];
+    const skippedNoChange: string[] = [];
 
-    for (const doc of matchesSnapshot.docs) {
-      const match = doc.data();
-      const matchTime = new Date(match.dateTime);
-      const idESPN = match.espnMatchId;
-
-      if (match.status === "SCHEDULED" && matchTime > anHourInTheFuture) {
-        continue; 
-      }
-
-      if (!idESPN) {
-        console.warn(`[Cron Scraper Warning] the match ${doc.id} (${match.teamHome} vs ${match.teamAway}) is active but doesnt have 'idESPN' mapped in the db`);
-        continue;
-      }
-  
+    for (const doc of matchDocs) {
+      const stored = doc.data();
       try {
-        const dataESPN = await espnScrapperFetching(idESPN);
-        
-        //return NextResponse.json(dataESPN)
-        const newHomeScore = dataESPN.partido.scoreHome !== undefined ? Number(dataESPN.partido.scoreHome) : match.scoreHome;
-        const newAwayScore = dataESPN.partido.scoreAway !== undefined ? Number(dataESPN.partido.scoreAway) : match.scoreAway;
-        const newState = dataESPN.partido.status !== undefined ? dataESPN.partido.status : match.status;
+        const apiMatch = await fetchSingleMatch(doc.id, token);
+        const newStatus = mapStatus(apiMatch.status);
+        const newHomeScore = apiMatch.score?.fullTime?.home ?? stored.scoreHome;
+        const newAwayScore = apiMatch.score?.fullTime?.away ?? stored.scoreAway;
+        const duration = apiMatch.score?.duration ?? null;
 
-        
-        if (
-          newState !== match.status ||
-          newHomeScore !== match.scoreHome ||
-          newAwayScore !== match.scoreAway
-        ) {
-          const matchRef = db.collection("matches").doc(doc.id);
-          
+        const scoreChanged =
+          newHomeScore !== stored.scoreHome || newAwayScore !== stored.scoreAway;
+        const statusChanged = newStatus !== stored.status;
+        const durationChanged = duration !== stored.scoreDuration;
+        const penaltiesChanged =
+          (apiMatch.score?.penalties?.home ?? null) !== stored.scorePenaltiesHome ||
+          (apiMatch.score?.penalties?.away ?? null) !== stored.scorePenaltiesAway;
+
+        if (!scoreChanged && !statusChanged && !durationChanged && !penaltiesChanged) {
+          skippedNoChange.push(doc.id);
+          continue;
+        }
+
+        const matchRef = db.collection("matches").doc(doc.id);
+
+        if (newStatus === "FINISHED") {
           batch.update(matchRef, {
             scoreHome: newHomeScore,
             scoreAway: newAwayScore,
-            status: newState, // 🔥 Ya nunca será undefined
-            lastScrapedAt: FieldValue.serverTimestamp()
+            status: "FINISHED",
+            winner: apiMatch.score?.winner ?? null,
+            scoreDuration: duration,
+            scoreRegularHome: apiMatch.score?.regularTime?.home ?? null,
+            scoreRegularAway: apiMatch.score?.regularTime?.away ?? null,
+            scoreExtraHome: apiMatch.score?.extraTime?.home ?? null,
+            scoreExtraAway: apiMatch.score?.extraTime?.away ?? null,
+            scorePenaltiesHome: apiMatch.score?.penalties?.home ?? null,
+            scorePenaltiesAway: apiMatch.score?.penalties?.away ?? null,
+            lastScrapedAt: FieldValue.serverTimestamp(),
           });
-
-          editedMatches++;
-
-          if (newState === "FINISHED") {
-            fetch(`${APP_URL}/api/calculate-points/${doc.id}`, { 
-              method: "POST",
-              cache: "no-store"
-            }).catch(err => console.error(`[Cron Scraper Error] trigger failed ${doc.id}:`, err));
+          toCalculatePoints.push(doc.id);
+        } else {
+  
+          const update: Record<string, unknown> = {
+            status: newStatus,
+            lastScrapedAt: FieldValue.serverTimestamp(),
+          };
+          if (scoreChanged) {
+            update.scoreHome = newHomeScore;
+            update.scoreAway = newAwayScore;
           }
+          if (duration) {
+            update.scoreDuration = duration;
+            update.scoreRegularHome = apiMatch.score?.regularTime?.home ?? null;
+            update.scoreRegularAway = apiMatch.score?.regularTime?.away ?? null;
+            update.scoreExtraHome = apiMatch.score?.extraTime?.home ?? null;
+            update.scoreExtraAway = apiMatch.score?.extraTime?.away ?? null;
+            update.scorePenaltiesHome = apiMatch.score?.penalties?.home ?? null;
+            update.scorePenaltiesAway = apiMatch.score?.penalties?.away ?? null;
+          }
+          batch.update(matchRef, update);
         }
-      } catch (scrapError: any) {
-        console.error(`[Cron Scraper Error match] failed to scrap ${idESPN}:`, scrapError?.message || scrapError);
+
+        updatedCount++;
+      } catch (err: any) {
+        console.error(`[Cron Error match ${doc.id}]:`, err?.message || err);
+        syncErrors.push(`${doc.id}: ${err?.message || err}`);
       }
     }
 
-    if (editedMatches > 0) {
+    if (updatedCount > 0) {
       await batch.commit();
+    }
+
+    // Trigger calculate-points for finished matches (fire and forget)
+    for (const matchId of toCalculatePoints) {
+      fetch(`${APP_URL}/api/calculate-points/${matchId}`, {
+        method: "POST",
+        cache: "no-store",
+      }).catch((err) =>
+        console.error(`[Cron Error] calculate-points failed ${matchId}:`, err),
+      );
+    }
+
+    // Sync standings whenever at least one match finished
+    if (toCalculatePoints.length > 0) {
+      fetch(`${APP_URL}/api/cron/sync-standings`, {
+        method: "PUT",
+        cache: "no-store",
+      }).catch((err) =>
+        console.error(`[Cron Error] sync-standings failed:`, err),
+      );
     }
 
     return NextResponse.json({
       success: true,
-      message: `Update completed. ${editedMatches} matches affected`,
+      message: `Sync completed. ${updatedCount} matches updated, ${toCalculatePoints.length} finished.`,
+      debug: {
+        baseUrl: process.env.FOOTBALL_DATA_BASE_URL ?? "https://api.football-data.org/v4 (default)",
+        totalMatchDocs: matchDocs.length,
+        skippedNoChange,
+        syncErrors,
+      },
     });
-
   } catch (error: any) {
-    console.error("[ General Cron Scraper Error ]:", error?.message || error);
-    return NextResponse.json({ error: "sync failed", detalles: error?.message }, { status: 500 });
+    console.error("[General Cron Error]:", error?.message || error);
+    return NextResponse.json(
+      { error: "sync failed", detalles: error?.message },
+      { status: 500 },
+    );
   }
 }

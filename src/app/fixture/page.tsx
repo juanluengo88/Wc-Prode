@@ -36,7 +36,7 @@ export default function FixturePage() {
 					user={currentUser}
 					matches={matches}
 					predictions={predictions.filter((p) => p.uid === currentUser.uid)}
-					onSelectMatch={(matchId) => router.push(`/match/${matchId}`)}
+					onSelectMatch={(matchId, fromUrl) => router.push(`/match/${matchId}?from=${encodeURIComponent(fromUrl ?? "/fixture")}`)}
 					onLogout={handleLogout}
 				/>
 				</Suspense>

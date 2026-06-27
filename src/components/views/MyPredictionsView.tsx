@@ -1,75 +1,75 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Match, Prediction } from "../../lib/mockData";
+import { useLanguage } from "../../context/LanguageContext";
+import { localizeGroupOrStage } from "../../lib/translations";
 
 interface MyPredictionsViewProps {
 	matches: Match[];
 	predictions: Prediction[];
 	onSelectMatch: (matchId: string) => void;
+	initialTab?: "ACTIVE" | "FINISHED";
 }
 
 export default function MyPredictionsView({
 	matches,
 	predictions,
 	onSelectMatch,
+	initialTab = "ACTIVE",
 }: MyPredictionsViewProps) {
-	const [subTab, setSubTab] = useState<"ACTIVE" | "FINISHED">("ACTIVE");
-	const [currentTime, setCurrentTime] = useState<number>(Date.now());
+	const router = useRouter();
+	const [currentTime, setCurrentTime] = useState<number>(0);
+	const { t, lang, locale } = useLanguage();
 
-	// Keep countdown times accurate with 1-second interval ticking
+	const [subTab, setSubTabState] = useState<"ACTIVE" | "FINISHED">(initialTab);
+
+	const setSubTab = (tab: "ACTIVE" | "FINISHED") => {
+		setSubTabState(tab);
+		router.replace(`?tab=${tab}`, { scroll: false });
+	};
+
 	useEffect(() => {
-		const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+		const tick = () => setCurrentTime(Date.now());
+		tick();
+		const timer = setInterval(tick, 1000);
 		return () => clearInterval(timer);
 	}, []);
 
-	// Map user's predictions with their corresponding matches
 	const predictionList = predictions
 		.map((pred) => {
 			const match = matches.find((m) => m.matchId === pred.matchId);
-			return {
-				prediction: pred,
-				match: match,
-			};
+			return { prediction: pred, match };
 		})
 		.filter((item) => item.match !== undefined) as {
 		prediction: Prediction;
 		match: Match;
 	}[];
 
-	// Filter into active and finished
 	const activePredictions = predictionList
 		.filter(
 			(item) =>
 				item.match.status === "SCHEDULED" || item.match.status === "LIVE",
 		)
-		.sort((a, b) => {
-			if (!a.match || !b.match) return 0;
-			return (
+		.sort(
+			(a, b) =>
 				new Date(a.match.dateTime).getTime() -
-				new Date(b.match.dateTime).getTime()
-			);
-		}); // Sort active predictions by match date, soonest first.
+				new Date(b.match.dateTime).getTime(),
+		);
 
 	const finishedPredictions = predictionList
 		.filter((item) => item.match.status === "FINISHED")
-		.sort((a, b) => {
-			if (!a.match || !b.match) return 0;
-			return (
+		.sort(
+			(a, b) =>
 				new Date(b.match.dateTime).getTime() -
-				new Date(a.match.dateTime).getTime()
-			);
-		}); // Sort predictions by match date, most recent first.
+				new Date(a.match.dateTime).getTime(),
+		);
 
-	// Helper to format remaining time
 	const getRemainingTimeStr = (matchDateTimeStr: string) => {
 		const matchTime = new Date(matchDateTimeStr).getTime();
 		const diff = matchTime - currentTime;
-		const lockLimit = 15 * 60 * 1000; // 15 mins
-
-		if (diff <= lockLimit) {
-			return "CERRADO (FALTAN < 15 MIN)";
-		}
+		if (diff <= 15 * 60 * 1000) return t("predictions_closed");
 
 		const days = Math.floor(diff / (24 * 60 * 60 * 1000));
 		const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
@@ -82,7 +82,7 @@ export default function MyPredictionsView({
 		parts.push(`${minutes}m`);
 		parts.push(`${seconds}s`);
 
-		return `Cierra en: ${parts.join(" ")}`;
+		return t("predictions_closesIn", { time: parts.join(" ") });
 	};
 
 	const isLocked = (matchDateTimeStr: string) => {
@@ -103,19 +103,15 @@ export default function MyPredictionsView({
 
 	return (
 		<div className="flex-1 bg-slate-950 text-slate-100 min-h-screen pb-16">
-			{/* Sub Header Navbar */}
 			<header className="sticky top-0 z-40 backdrop-blur-md bg-slate-900/80 border-b border-slate-880 px-4 py-4 sm:px-8">
 				<div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 					<div>
 						<h2 className="text-lg font-extrabold text-white">
-							Mis Pronósticos
+							{t("predictions_title")}
 						</h2>
-						<p className="text-xs text-slate-400">
-							Historial y seguimiento de tus apuestas
-						</p>
+						<p className="text-xs text-slate-400">{t("predictions_subtitle")}</p>
 					</div>
 
-					{/* Sub tabs switcher */}
 					<div className="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 self-start sm:self-center">
 						<button
 							onClick={() => setSubTab("ACTIVE")}
@@ -125,7 +121,7 @@ export default function MyPredictionsView({
 									: "text-slate-450 hover:text-slate-200"
 							}`}
 						>
-							Activos ({activePredictions.length})
+							{t("predictions_tabActive", { count: activePredictions.length })}
 						</button>
 						<button
 							onClick={() => setSubTab("FINISHED")}
@@ -135,13 +131,12 @@ export default function MyPredictionsView({
 									: "text-slate-455 hover:text-slate-200"
 							}`}
 						>
-							Finalizados ({finishedPredictions.length})
+							{t("predictions_tabFinished", { count: finishedPredictions.length })}
 						</button>
 					</div>
 				</div>
 			</header>
 
-			{/* View List Container */}
 			<main className="max-w-4xl mx-auto px-4 py-8 sm:px-8">
 				{activeTabList.length === 0 ? (
 					<div className="text-center py-20 bg-slate-900/20 rounded-3xl border border-slate-900/40">
@@ -160,8 +155,9 @@ export default function MyPredictionsView({
 							/>
 						</svg>
 						<p className="text-slate-500 text-sm font-medium">
-							No tienes pronósticos{" "}
-							{subTab === "ACTIVE" ? "activos" : "finalizados"} en este momento.
+							{subTab === "ACTIVE"
+								? t("predictions_emptyActive")
+								: t("predictions_emptyFinished")}
 						</p>
 					</div>
 				) : (
@@ -172,13 +168,13 @@ export default function MyPredictionsView({
 
 							const dateObj = new Date(match.dateTime);
 							const formattedDate = dateObj
-								.toLocaleDateString("es-ES", {
+								.toLocaleDateString(locale, {
 									weekday: "short",
 									day: "numeric",
 									month: "short",
 								})
 								.replace(".", "");
-							const formattedTime = dateObj.toLocaleTimeString("es-ES", {
+							const formattedTime = dateObj.toLocaleTimeString(locale, {
 								hour: "2-digit",
 								minute: "2-digit",
 							});
@@ -189,19 +185,16 @@ export default function MyPredictionsView({
 									onClick={() => onSelectMatch(match.matchId)}
 									className="group relative flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/40 hover:bg-slate-900/70 border border-slate-880 hover:border-slate-700 transition-all duration-200 cursor-pointer shadow-md"
 								>
-									{/* Left: Match metadata */}
 									<div className="flex flex-col items-center sm:items-start gap-1 w-full sm:w-auto">
 										<span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
-											{match.groupOrStage}
+											{localizeGroupOrStage(match.groupOrStage, lang)}
 										</span>
 										<span className="text-xs text-slate-500 font-semibold">
 											{formattedDate} - {formattedTime} hs
 										</span>
 									</div>
 
-									{/* Center: Match Matchup Teams */}
 									<div className="flex items-center justify-center gap-4 flex-1">
-										{/* Home Team */}
 										<div className="flex items-center gap-2.5 w-28 justify-end text-right">
 											<span className="text-xs font-bold truncate max-w-[80px] sm:max-w-none text-slate-200">
 												{match.teamHome}
@@ -213,31 +206,35 @@ export default function MyPredictionsView({
 											/>
 										</div>
 
-										{/* Score comparison visual */}
 										<div className="flex flex-col items-center justify-center bg-slate-950 px-3.5 py-1.5 rounded-xl border border-slate-850">
-											<div className="flex items-center gap-1.5">
-												{/* User prediction */}
-												<span className="text-sm font-black text-amber-400">
-													{prediction.predictHome}
-												</span>
-												<span className="text-slate-655 font-bold text-xs">
-													-
-												</span>
-												<span className="text-sm font-black text-amber-400">
-													{prediction.predictAway}
-												</span>
-											</div>
-
-											{/* Real result indicator below user prediction */}
-											{match.status === "FINISHED" ||
-											match.status === "LIVE" ? (
-												<div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1 pt-0.5 border-t border-slate-850/60">
-													Real: {match.scoreHome}-{match.scoreAway}
+											{prediction.predictPenalties ? (
+												<div className="flex flex-col items-center gap-0.5">
+													<span className="text-[9px] font-black text-violet-400 uppercase tracking-wider">Penales</span>
+													<span className="text-sm font-black text-violet-300">
+														{prediction.predictPenaltiesWinner === "HOME_TEAM" ? match.teamHome : match.teamAway}
+													</span>
 												</div>
-											) : null}
+											) : (
+												<div className="flex items-center gap-1.5">
+													<span className="text-sm font-black text-amber-400">
+														{prediction.predictHome}
+													</span>
+													<span className="text-slate-655 font-bold text-xs">-</span>
+													<span className="text-sm font-black text-amber-400">
+														{prediction.predictAway}
+													</span>
+												</div>
+											)}
+
+											{(match.status === "FINISHED" || match.status === "LIVE") && (
+												<div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-1 pt-0.5 border-t border-slate-850/60">
+													{match.scoreDuration === "PENALTY_SHOOTOUT"
+														? `Pen: ${match.scorePenaltiesHome}-${match.scorePenaltiesAway}`
+														: `${t("predictions_real")} ${match.scoreHome}-${match.scoreAway}`}
+												</div>
+											)}
 										</div>
 
-										{/* Away Team */}
 										<div className="flex items-center gap-2.5 w-28 justify-start text-left">
 											<img
 												src={match.teamAwayFlag}
@@ -250,23 +247,21 @@ export default function MyPredictionsView({
 										</div>
 									</div>
 
-									{/* Right: Dynamic locking timer or points award tag */}
 									<div className="shrink-0 w-full sm:w-auto flex items-center justify-center sm:justify-end">
 										{match.status === "FINISHED" ? (
 											<div
 												className={`px-3 py-1 rounded-full text-xs font-extrabold border ${getPointsTagColor(prediction.pointsEarned)}`}
 											>
-												{prediction.pointsEarned === 3 && "Exacto +3 pts"}
-												{prediction.pointsEarned === 1 && "Ganador +1 pt"}
-												{prediction.pointsEarned === 0 && "Incorrecto 0 pts"}
+												{prediction.pointsEarned === 3 && t("predictions_exact")}
+												{prediction.pointsEarned === 1 && t("predictions_partial")}
+												{prediction.pointsEarned === 0 && t("predictions_wrong")}
 											</div>
 										) : match.status === "LIVE" ? (
 											<span className="flex items-center gap-1 bg-red-500/10 text-red-400 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-red-500/20">
 												<span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-												En Vivo
+												{t("predictions_live")}
 											</span>
 										) : (
-											/* Scheduled match locking countdown */
 											<div className="text-center sm:text-right">
 												<span
 													className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase border ${

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
 import type { User } from "@/lib/mockData";
+
+export const dynamic = "force-dynamic";
 import { getUsers } from "@/services/userService";
 
 // GET /api/users — sorted leaderboard
