@@ -129,7 +129,8 @@ export default function MatchDetailView({
 	const handleSave = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		if (homeScore === "" || awayScore === "" || isLocked) return;
+		if (isLocked) return;
+		if (!predictPenalties && (homeScore === "" || awayScore === "")) return;
 
 		setIsSaving(true);
 		try {
