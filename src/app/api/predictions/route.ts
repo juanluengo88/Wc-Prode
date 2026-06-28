@@ -13,10 +13,19 @@ export async function GET(request: NextRequest) {
 		.where("uid", "==", uid)
 		.get();
 
-	const predictions: Prediction[] = snapshot.docs.map((doc) => ({
-		predictionId: doc.id,
-		...(doc.data() as Omit<Prediction, "predictionId">),
-	}));
+	const predictions: Prediction[] = snapshot.docs.map((doc) => {
+		const data = doc.data() as Partial<Prediction>;
+		return {
+			predictionId: doc.id,
+			uid: data.uid ?? uid,
+			matchId: data.matchId ?? "",
+			predictHome: data.predictHome ?? null,
+			predictAway: data.predictAway ?? null,
+			pointsEarned: data.pointsEarned ?? null,
+			predictPenalties: data.predictPenalties ?? false,
+			predictPenaltiesWinner: data.predictPenaltiesWinner ?? null,
+		};
+	});
 
 	return NextResponse.json(predictions);
 }
@@ -70,6 +79,8 @@ export async function POST(request: NextRequest) {
 			predictHome,
 			predictAway,
 			pointsEarned: null,
+			predictPenalties: predictPenalties ?? false,
+			predictPenaltiesWinner: predictPenaltiesWinner ?? null,
 		} as Prediction,
 		{ status: 201 },
 	);
