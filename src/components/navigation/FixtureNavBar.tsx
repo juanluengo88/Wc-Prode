@@ -78,7 +78,12 @@ export default function FixtureNavBar({
 					{tabs.map(({ key, label }) => (
 						<button
 							key={key}
-							onClick={() => router.push(buildUrl({ tab: key, page: "1" }))}
+							onClick={(e) => {
+								e.preventDefault();
+								router.replace(buildUrl({ tab: key, page: "1" }), {
+									scroll: false,
+								});
+							}}
 							className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
 								tab === key
 									? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/10"
