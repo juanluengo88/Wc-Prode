@@ -13,7 +13,10 @@ dotenv.config({ path: [".env", ".env.local"] });
 
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { fetchSingleMatch } from "../src/lib/footballDataApi.js";
+import {
+	fetchSingleMatch,
+	fetchESPNMatch,
+} from "../src/lib/footballDataApi.js";
 import { sleep } from "../src/lib/utils.js";
 
 const BATCH_SIZE = 400;
@@ -35,7 +38,7 @@ async function main() {
 		});
 	}
 
-	const db = getFirestore("prod");
+	const db = getFirestore(process.env.FIRESTORE_DB || "");
 
 	const snapshot = await db.collection("matches").get();
 	const finished = snapshot.docs.filter((d) => d.data().status === "FINISHED");
@@ -48,7 +51,10 @@ async function main() {
 	}
 
 	// ─── Fetch missing scores from API ───────────────────────────────────────────
-	const scoreUpdates = new Map<string, { scoreHome: number; scoreAway: number }>();
+	const scoreUpdates = new Map<
+		string,
+		{ scoreHome: number; scoreAway: number }
+	>();
 
 	for (const doc of finished) {
 		const data = doc.data();
@@ -58,15 +64,20 @@ async function main() {
 
 		let apiMatch = null;
 		while (apiMatch === null) {
+			const espnMatchId: string | undefined = data.espnMatchId;
 			try {
-				apiMatch = await fetchSingleMatch(doc.id, token);
+				apiMatch = espnMatchId
+					? await fetchESPNMatch(espnMatchId)
+					: await fetchSingleMatch(doc.id, token ?? "");
 			} catch (err: unknown) {
 				// Respect rate-limit: the API returns a Retry-After-style header via
 				// the error, but fetchSingleMatch throws on non-OK. Re-fetch headers
 				// aren't available here, so wait a fixed 60 s on any fetch failure.
 				const msg = err instanceof Error ? err.message : String(err);
 				const wait = msg.match(/429/) ? 60 : 5;
-				console.warn(`  ⚠️  Error fetching match ${doc.id}: ${msg}. Retrying in ${wait}s...`);
+				console.warn(
+					`  ⚠️  Error fetching match ${doc.id}: ${msg}. Retrying in ${wait}s...`,
+				);
 				await sleep(wait * 1000);
 			}
 		}
@@ -76,7 +87,9 @@ async function main() {
 			scoreUpdates.set(doc.id, { scoreHome: home, scoreAway: away });
 			console.log(`  ✅  Match ${doc.id}: ${home} - ${away}`);
 		} else {
-			console.warn(`  ⚠️  Match ${doc.id} is FINISHED but API returned null scores — skipping score update.`);
+			console.warn(
+				`  ⚠️  Match ${doc.id} is FINISHED but API returned null scores — skipping score update.`,
+			);
 		}
 	}
 

@@ -88,7 +88,7 @@ if (!getApps().length) {
 	});
 }
 
-const db = getFirestore("prod");
+const db = getFirestore(process.env.FIRESTORE_DB || "");
 
 // ---------------------------------------------------------------------------
 // Upsert prediction

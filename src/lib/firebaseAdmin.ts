@@ -12,4 +12,4 @@ if (!getApps().length) {
 	});
 }
 
-export const db = getFirestore("prod");
+export const db = getFirestore(process.env.FIRESTORE_DB || "");

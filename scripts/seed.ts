@@ -58,7 +58,7 @@ async function main() {
 			}),
 		});
 	}
-	const db = getFirestore("prod");
+	const db = getFirestore(process.env.FIRESTORE_DB || "");
 
 	// ─── Fetch from API ─────────────────────────────────────────────────────────
 	console.log("⚽  Fetching WC matches from football-data.org...");
